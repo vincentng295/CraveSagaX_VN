@@ -36,6 +36,7 @@ jobs:
             --exclude='dist' \
             --exclude='key.pem' \
             --exclude='*.crx' \
+            --exclude='docs' \
             --exclude='README.md' \
             ./ dist/
 
