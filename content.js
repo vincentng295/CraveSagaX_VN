@@ -9,7 +9,7 @@ function createFloatingUI() {
     Object.assign(btn.style, {
         position: 'fixed',
         left: '10px',
-        top: '10px',
+        bottom: '10px',
         zIndex: '999999',
         padding: '10px 14px',
         backgroundColor: '#28a745',
