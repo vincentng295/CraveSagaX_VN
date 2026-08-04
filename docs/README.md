@@ -19,27 +19,27 @@ Extension tự động việt hóa và tối ưu hiển thị cho webgame (Crave
 
 ---
 
-### 📱 Điện thoại Android (Kiwi Browser / Edge Canary)
+### 📱 Điện thoại Android (Edge Canary)
 
-Do các trình duyệt di động thông thường không hỗ trợ cài tiện ích chưa đóng gói, bạn có thể sử dụng các trình duyệt chuyên dụng như Kiwi Browser hoặc Edge Canary để chạy extension này trên Android.
+Do các trình duyệt di động thông thường không hỗ trợ cài tiện ích chưa đóng gói, bạn có thể sử dụng các trình duyệt chuyên dụng như Edge Canary để chạy extension này trên Android.
 
-#### 🟢 Cách 1: Sử dụng [Kiwi Browser](https://github.com/kiwibrowser/src.next) (Khuyên dùng - Đơn giản nhất)
+#### 1. Tải [Trình duyệt Edge Canary](https://play.google.com/store/apps/details?id=com.microsoft.emmx.canary)
+#### 2. **Tải file CRX:** Tải file [extension.crx](https://github.com/vincentng295/CraveSagaX_VN/releases/latest/download/extension.crx) trực tiếp về thiết bị Android.
+#### 3. **Kích hoạt Chế độ nhà phát triển trong Edge Canary:**
 
-1. **Tải file CRX:** Tải file [extension.crx](https://github.com/vincentng295/CraveSagaX_VN/releases/latest/download/extension.crx) trực tiếp về thiết bị Android. *(Không cần giải nén, Kiwi có thể đọc trực tiếp file .crx!)*
-2. **Mở trang quản lý Tiện ích:** Nhấn vào biểu tượng 3 chấm (⋮) ở góc trên bên phải → Chọn **Extensions** (Tiện ích mở rộng) hoặc nhập `chrome://extensions/` vào thanh địa chỉ.
-3. **Bật Chế độ nhà phát triển:** Bật công tắc **Developer mode**.
-4. **Cài đặt Extension:** Nhấn vào nút **+(from .zip/.crx/.user.js)**, sau đó chọn file `extension.crx` vừa tải về trong bộ nhớ máy.
-5. **Hoàn tất:** Extension đã hoạt động. Bạn có thể chỉnh sửa tùy chọn cấu hình bằng cách nhấn vào menu 3 chấm (⋮) và kéo xuống dưới cùng.
+<img alt="image" src="https://github.com/user-attachments/assets/ea576477-6c85-44ed-a0a2-73e68a7ca9b5" />
 
----
-
-#### 🟡 Cách 2: Sử dụng Edge Canary (Nâng cao)
-
-1. **Tải file CRX:** Tải file [extension.crx](https://github.com/vincentng295/CraveSagaX_VN/releases/latest/download/extension.crx) trực tiếp về thiết bị Android.
-2. **Kích hoạt Chế độ nhà phát triển trong Edge Canary:** 
    * Mở Edge Canary → Vào **Cài đặt (Settings)** → **Về Microsoft Edge (About Microsoft Edge)**.
    * Nhấn liên tục **5–7 lần** vào logo phiên bản Edge (Edge Build Version) cho đến khi xuất hiện thông báo kích hoạt "Developer Options".
-3. **Cài đặt tiện ích:** 
+
+#### 4. **Cài đặt tiện ích:**
+<img alt="image" src="https://github.com/user-attachments/assets/46d21f53-1ff5-469c-9a12-0ce15169dbf4" />
+
    * Quay lại menu Cài đặt chính → Vào **Developer Options**.
    * Chọn **Extension install by crx** → Nhấn **Choose .crx file** và chọn file `extension.crx` đã tải. 
    * Nhấn **OK** để hoàn tất cài đặt.
+
+## Chơi Crave Saga X bản web
+
+- Nutaku: <https://www.nutaku.net/games/crave-saga-x/play>
+- Erolabs: <https://www.ero-labs.com/en/cloud_game.html?id=47&connect_type=1&connection_id=30>
