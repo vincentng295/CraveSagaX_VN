@@ -40,7 +40,8 @@ Dự án này được mình (**HuskyDG**) phát triển xuất phát từ **tì
 2. **Mở trang quản lý Tiện ích:** Truy cập đường dẫn `chrome://extensions/` trên trình duyệt Chrome (hoặc Edge, Opera, Brave).
 3. **Bật Chế độ dành cho nhà phát triển:** Gạt công tắc **Developer mode** (Chế độ dành cho nhà phát triển) ở góc trên bên phải sang trạng thái **BẬT (On)**.
 4. **Tải tiện ích đã giải nén:** Nhấn vào nút **Load unpacked** (Tải tiện ích đã giải nén) ở góc trên bên trái, sau đó chọn thư mục chứa mã nguồn vừa giải nén.
-5. **Ghim tiện ích:** Tìm tiện ích có tên *AdBlock Based-Hook Extension* và ghim (Pin) lên thanh công cụ để dễ dàng thao tác khi chơi game.
+5. **Ghim tiện ích:** Tìm tiện ích có tên *Crave Saga X Tiếng Việt* và ghim (Pin) lên thanh công cụ để dễ dàng thao tác khi chơi game.
+
 
 ---
 
@@ -63,6 +64,12 @@ Do các trình duyệt di động thông thường không hỗ trợ cài tiện
    * Quay lại menu Cài đặt chính → Vào **Developer Options**.
    * Chọn **Extension install by crx** → Nhấn **Choose .crx file** và chọn file `extension.crx` đã tải. 
    * Nhấn **OK** để hoàn tất cài đặt.
+
+#### 5. **Quản lý extension**
+
+<img alt="image" src="https://github.com/user-attachments/assets/89934dd7-40b6-438d-8fe0-4b1c45513b26" />
+
+
 
 ## Chơi Crave Saga X bản web
 
