@@ -82,10 +82,10 @@ Do các trình duyệt di động thông thường không hỗ trợ cài tiện
 
 Extension hoàn toàn miễn phí, nhưng nếu bạn yêu thích công cụ này và muốn gửi chút "café" động viên mình tiếp tục duy trì, cập nhật tính năng mới thì có thể ủng hộ qua cổng VietQR bên dưới:
 
-<img src="https://img.vietqr.io/image/BIDV-060203003174-compact2.png?amount=0&addInfo=CraveSagaX%20VN%20Donation&accountName=NGUYEN%20HOANG%20THE%20VI" alt="Mã QR Donation" width="300"/>
+<img src="https://img.vietqr.io/image/BIDV-0332186295-compact2.png?amount=0&addInfo=CraveSagaX%20VN%20Donation&accountName=NGUYEN%20HOANG%20THE%20VI" alt="Mã QR Donation" width="300"/>
 
 **Ngân hàng:** BIDV  
-**Số tài khoản:** `060203003174`  
+**Số tài khoản:** `0332186295`  
 **Chủ tài khoản:** `NGUYEN HOANG THE VI`  
 **Nội dung:** `CraveSagaX VN Donation`
 
