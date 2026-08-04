@@ -1,6 +1,16 @@
 
 window.is_translated = 1;
 
+// Ký tự vô hình (Zero Width Space, U+200B) dùng làm "cờ đánh dấu": khi tầng
+// chặn XHR (IIFE thứ 2 bên dưới) đã dịch sẵn 1 đoạn thoại trong file kịch bản,
+// nó sẽ chèn ký tự này vào đầu chuỗi kết quả. Khi Cocos gán chuỗi đó vào
+// label.string, initCocosHook() (IIFE thứ 1) nhận diện được cờ này để BỎ QUA
+// việc live-translate lại — tránh gọi API dịch 2 lần cho cùng 1 câu, và tránh
+// dịch chồng lên bản đã dịch sẵn (dịch tiếng Việt -> tiếng Việt lần nữa dễ ra
+// kết quả sai). Đặt ở scope ngoài cùng (không nằm trong IIFE nào) để cả 2 IIFE
+// phía dưới cùng tham chiếu tới đúng 1 giá trị.
+const TRANSLATED_MARKER = '\u200B';
+
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         window.is_translated = event.data.enabled ? 1 : 0;
@@ -158,8 +168,66 @@ window.addEventListener('message', (event) => {
             } catch (err) {}
         }
 
+        // Fix font + ngắt dòng lại rồi render lại cho 1 label, dùng thẳng
+        // `text` truyền vào (text đã là bản dịch cuối cùng, hàm này không tự dịch gì).
+        // Dùng chung cho cả nhánh "đã dịch sẵn ở XHR" lẫn nhánh "live-translate" bên dưới.
+        function fixAndRewrap(labelInstance, text) {
+            fixCocosFont(labelInstance);
+
+            // PASS A: bật wrap engine gốc và gán text để Cocos tự đo chữ —
+            // hook measureText ở trên sẽ "chụp" lại context + font thật
+            // mà nó vừa dùng. (Có thể hiện sai 1 frame, không đáng kể.)
+            labelInstance.enableWrapText = true;
+            if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = true;
+            originalSet.call(labelInstance, text);
+
+            if (!lastMeasureCtx || !lastMeasureFont) {
+                // Không bắt được context đo (build không dùng canvas 2D để đo
+                // system font) — đành để engine tự wrap như cũ.
+                if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
+                if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
+                return;
+            }
+
+            // PASS B: tự ngắt dòng bằng đúng context/font vừa chụp được,
+            // rồi tắt wrap tự động của engine và gán text đã có \n sẵn.
+            const safetyMargin = 8; // chừa lề nhỏ tránh dính viền
+            const maxWidth = (labelInstance.node ? labelInstance.node.width : 650) - safetyMargin;
+            const wrapped = wrapWithEngineMetrics(lastMeasureCtx, lastMeasureFont, text, maxWidth);
+
+            labelInstance.enableWrapText = false;
+            if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = false;
+            originalSet.call(labelInstance, wrapped);
+
+            if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
+            if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
+        }
+
         Object.defineProperty(proto, 'string', {
             set: function (val) {
+                const labelInstance = this;
+
+                // ================== NHÁNH 1: text đã được dịch sẵn ở tầng XHR ==================
+                // (có TRANSLATED_MARKER ở đầu) -> bỏ ký tự đánh dấu, set thẳng,
+                // KHÔNG gọi API dịch nữa (tránh dịch đè lần 2 lên bản đã dịch sẵn).
+                // Vẫn cần fix font + ngắt dòng lại vì đây là bước hiển thị, độc lập
+                // với việc nội dung đến từ đâu.
+                if (typeof val === 'string' && val.charAt(0) === TRANSLATED_MARKER) {
+                    const cleanVal = val.slice(TRANSLATED_MARKER.length);
+                    originalSet.call(this, cleanVal);
+
+                    if (debounceMap.has(this)) {
+                        clearTimeout(debounceMap.get(this));
+                    }
+                    debounceMap.set(this, setTimeout(() => {
+                        fixAndRewrap(labelInstance, cleanVal);
+                    }, 150));
+                    return;
+                }
+
+                // ================== NHÁNH 2: text thường -> LIVE TRANSLATE ==================
+                // (dùng cho các label không đi qua file .txt bị chặn XHR — ví dụ text UI,
+                // menu, popup được set trực tiếp bằng JS của game thay vì đọc từ kịch bản.)
                 originalSet.call(this, val);
 
                 if (!window.is_translated || !val || typeof val !== 'string' || !isDialogueText(val)) return;
@@ -168,41 +236,10 @@ window.addEventListener('message', (event) => {
                     clearTimeout(debounceMap.get(this));
                 }
 
-                const labelInstance = this;
-
                 debounceMap.set(this, setTimeout(async () => {
                     let translatedText = await translateText(val);
                     if (!translatedText || !window.is_translated) return;
-
-                    fixCocosFont(labelInstance);
-
-                    // PASS A: bật wrap engine gốc và gán text để Cocos tự đo chữ —
-                    // hook measureText ở trên sẽ "chụp" lại context + font thật
-                    // mà nó vừa dùng. (Có thể hiện sai 1 frame, không đáng kể.)
-                    labelInstance.enableWrapText = true;
-                    if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = true;
-                    originalSet.call(labelInstance, translatedText);
-
-                    if (!lastMeasureCtx || !lastMeasureFont) {
-                        // Không bắt được context đo (build không dùng canvas 2D để đo
-                        // system font) — đành để engine tự wrap như cũ.
-                        if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
-                        if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
-                        return;
-                    }
-
-                    // PASS B: tự ngắt dòng bằng đúng context/font vừa chụp được,
-                    // rồi tắt wrap tự động của engine và gán text đã có \n sẵn.
-                    const safetyMargin = 8; // chừa lề nhỏ tránh dính viền
-                    const maxWidth = (labelInstance.node ? labelInstance.node.width : 650) - safetyMargin;
-                    const wrapped = wrapWithEngineMetrics(lastMeasureCtx, lastMeasureFont, translatedText, maxWidth);
-
-                    labelInstance.enableWrapText = false;
-                    if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = false;
-                    originalSet.call(labelInstance, wrapped);
-
-                    if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
-                    if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
+                    fixAndRewrap(labelInstance, translatedText);
                 }, 150));
             },
             get: originalDescriptor.get,
@@ -254,26 +291,31 @@ window.addEventListener('message', (event) => {
     async function translateSingleText(text) {
         if (!text || !text.trim()) return text;
         const cleanText = text.replace(/\\,/g, ',');
-        if (translateCache.has(cleanText)) return translateCache.get(cleanText);
+
+        // Cache lưu bản dịch THUẦN (không kèm marker) — marker chỉ gắn vào lúc
+        // trả kết quả ra, để mọi lần trả (dù từ cache hay fetch mới) đều nhất quán.
+        if (translateCache.has(cleanText)) {
+            return TRANSLATED_MARKER + translateCache.get(cleanText);
+        }
 
         try {
             const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
             const res = await fetch(url);
             if (!res.ok) {
                 console.error(`[GT Error ${res.status}] "${cleanText}"`);
-                return text;
+                return text; // thất bại: trả bản gốc, KHÔNG đánh dấu đã dịch
             }
             const data = await res.json();
             if (data && data[0]) {
                 const translated = data[0].map(seg => seg[0]).join('');
                 const result = translated.replace(/,/g, '\\,');
                 translateCache.set(cleanText, result);
-                return result;
+                return TRANSLATED_MARKER + result; // thành công: đánh dấu
             }
         } catch (err) {
             console.error(`[Network Error] "${cleanText}":`, err);
         }
-        return text;
+        return text; // thất bại: trả bản gốc, KHÔNG đánh dấu đã dịch
     }
 
     // ================== 2. PARSE + DỊCH TOÀN BỘ SCRIPT ==================
