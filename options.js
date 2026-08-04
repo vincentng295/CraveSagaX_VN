@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('dict-table-body');
     const searchInput = document.getElementById('search-input');
     const chapFilterSelect = document.getElementById('chap-filter-select');
+    const chapRemarkInput = document.getElementById('chap-remark-input');
     const totalCountEl = document.getElementById('total-count');
     const btnExport = document.getElementById('btn-export');
     const btnImportTrigger = document.getElementById('btn-import-trigger');
@@ -9,7 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClearAll = document.getElementById('btn-clear-all');
 
     let translationDict = {};
-    let currentFilteredDict = {}; // Lưu giữ kết quả đã filter để Export JSON
+    let chapRemarks = {}; // Lưu Mapping: { "md5name.txt": "Tên Chap Gợi Nhớ" }
+    let currentFilteredDict = {};
     let sortMode = 'time-asc';
 
     function getEntryValue(entry) {
@@ -89,8 +91,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadDictionary() {
-        chrome.storage.local.get({ translationDict: {} }, async (result) => {
+        // Nạp cả translationDict và chapRemarks
+        chrome.storage.local.get({ translationDict: {}, chapRemarks: {} }, async (result) => {
             translationDict = result.translationDict || {};
+            chapRemarks = result.chapRemarks || {};
 
             if (Object.keys(translationDict).length === 0) {
                 try {
@@ -111,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cập nhật danh sách Chap trong Filter Dropdown
+    // Cập nhật danh sách Chap trong Filter Dropdown kèm Remark
     function populateChapFilterOptions() {
         const selectedChap = chapFilterSelect.value;
         const chapSet = new Set();
@@ -125,7 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Array.from(chapSet).sort().forEach(chap => {
             const opt = document.createElement('option');
             opt.value = chap;
-            opt.textContent = chap;
+            
+            // Ưu tiên sử dụng Remark để hiển thị trong Select Option
+            const displayName = chapRemarks[chap] ? `${chapRemarks[chap]} (${chap})` : chap;
+            opt.textContent = displayName;
+
             if (chap === selectedChap) opt.selected = true;
             chapFilterSelect.appendChild(opt);
         });
@@ -146,6 +154,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTable() {
         const filterText = searchInput.value.trim().toLowerCase();
         const filterChap = chapFilterSelect.value;
+
+        // Xử lý ẩn/hiện và nạp giá trị cho Ô Remark khi chọn 1 Chap cụ thể
+        if (filterChap) {
+            chapRemarkInput.style.display = 'inline-block';
+            chapRemarkInput.value = chapRemarks[filterChap] || '';
+        } else {
+            chapRemarkInput.style.display = 'none';
+            chapRemarkInput.value = '';
+        }
 
         tableBody.innerHTML = '';
         const keys = sortKeys(Object.keys(translationDict));
@@ -169,9 +186,14 @@ document.addEventListener('DOMContentLoaded', () => {
             currentFilteredDict[key] = entry;
             count++;
 
+            // Ưu tiên hiển thị Remark nếu có ở cột Chap/File
+            const displayChapBadge = chapName 
+                ? `<span class="chap-badge" title="${escapeHtml(chapName)}">${escapeHtml(chapRemarks[chapName] || chapName)}</span>` 
+                : '<span class="speaker-none">—</span>';
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${chapName ? `<span class="chap-badge">${escapeHtml(chapName)}</span>` : '<span class="speaker-none">—</span>'}</td>
+                <td>${displayChapBadge}</td>
                 <td>${speakerName ? `<span class="speaker-badge">${escapeHtml(speakerName)}</span>` : '<span class="speaker-none">—</span>'}</td>
                 <td><strong>${escapeHtml(key)}</strong></td>
                 <td>
@@ -235,13 +257,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveDictionary() {
-        chrome.storage.local.set({ translationDict });
+        chrome.storage.local.set({ translationDict, chapRemarks });
     }
 
-    // Export CHỈ xuất các item trong currentFilteredDict
+    // Lắng nghe sự kiện lưu Remark khi nhập vào ô Chap Remark Input
+    chapRemarkInput.addEventListener('change', (e) => {
+        const filterChap = chapFilterSelect.value;
+        if (!filterChap) return;
+
+        const remarkVal = e.target.value.trim();
+        if (remarkVal) {
+            chapRemarks[filterChap] = remarkVal;
+        } else {
+            delete chapRemarks[filterChap];
+        }
+        
+        saveDictionary();
+        populateChapFilterOptions(); // Cập nhật lại dropdown danh sách Chap
+        renderTable(); // Cập nhật lại bảng để hiển thị badge mới
+    });
+
+    // Export JSON sẽ tự động lấy Remark (nếu có) để làm tên file xuất ra
     btnExport.addEventListener('click', () => {
         const filterChap = chapFilterSelect.value;
-        const fileNameSuffix = filterChap ? `_${filterChap.replace('.txt', '')}` : '';
+        let fileNameSuffix = '';
+        if (filterChap) {
+            const remarkName = chapRemarks[filterChap] ? chapRemarks[filterChap].replace(/\s+/g, '_') : filterChap.replace('.txt', '');
+            fileNameSuffix = `_${remarkName}`;
+        }
+
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentFilteredDict, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
@@ -292,6 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnClearAll.addEventListener('click', () => {
         if (confirm("Bạn có chắc chắn muốn xóa toàn bộ từ điển đã thu thập?")) {
             translationDict = {};
+            chapRemarks = {};
             saveDictionary();
             populateChapFilterOptions();
             renderTable();
