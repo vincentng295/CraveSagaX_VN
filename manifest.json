@@ -9,6 +9,10 @@
     "48": "crave-saga.png",
     "128": "crave-saga.png"
   },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "crave-saga.png"
+  },
   "permissions": [
     "storage",
     "activeTab"

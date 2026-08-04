@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Crave Saga X VN</title>
+  <style>
+    body {
+      width: 290px;
+      padding: 14px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background-color: #f9f9fb;
+      color: #333;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 8px;
+    }
+    .header img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
+    .header h2 {
+      font-size: 15px;
+      margin: 0;
+      color: #111827;
+    }
+    .section {
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .25s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #10b981;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .game-links {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .btn-game {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      transition: opacity 0.2s;
+    }
+    .btn-game:hover {
+      opacity: 0.9;
+    }
+    .btn-nutaku { background-color: #e11d48; }
+    .btn-erolabs { background-color: #7c3aed; }
+
+    /* Donation Styles */
+    .donation-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .donation-qr {
+      width: 100%;
+      max-width: 220px;
+      border-radius: 6px;
+      border: 1px solid #f3f4f6;
+      margin-bottom: 8px;
+    }
+    .bank-info {
+      font-size: 12px;
+      text-align: left;
+      background: #f3f4f6;
+      padding: 8px 10px;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .bank-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .copy-btn {
+      background: #e5e7eb;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .copy-btn:hover {
+      background: #d1d5db;
+    }
+    .donation-note {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 8px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="crave-saga.png" alt="logo">
+    <h2>CraveSagaX VN</h2>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Trạng thái dịch</div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="status-text">Tự động dịch: ON</span>
+      <label class="switch">
+        <input type="checkbox" id="translate-toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Mở game theo nhà phát hành</div>
+    <div class="game-links">
+      <a href="https://www.nutaku.net/games/crave-saga-x/play" target="_blank" class="btn-game btn-nutaku">
+        <span>Nutaku</span>
+        <span>↗</span>
+      </a>
+      <a href="https://www.ero-labs.com/en/cloud_game.html?id=47&connect_type=1&connection_id=30" target="_blank" class="btn-game btn-erolabs">
+        <span>Erolabs</span>
+        <span>↗</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">☕ Ủng hộ dự án</div>
+    <div class="donation-card">
+      <img src="https://img.vietqr.io/image/BIDV-060203003174-compact2.png?amount=0&addInfo=CraveSagaX%20VN%20Donation&accountName=NGUYEN%20HOANG%20THE%20VI" alt="VietQR Donation" class="donation-qr" />
+      <div class="bank-info">
+        <div class="bank-row">
+          <span>Ngân hàng: <b>BIDV</b></span>
+        </div>
+        <div class="bank-row">
+          <span>STK: <b id="stk">060203003174</b></span>
+          <button class="copy-btn" id="btn-copy-stk">Copy</button>
+        </div>
+        <div class="bank-row">
+          <span>Chủ TK: <b>NGUYEN HOANG THE VI</b></span>
+        </div>
+        <div class="bank-row">
+          <span>Nội dung: <b id="memo">CraveSagaX VN Donation</b></span>
+          <button class="copy-btn" id="btn-copy-memo">Copy</button>
+        </div>
+      </div>
+      <div class="donation-note">Cảm ơn sự đóng góp động viên của bạn! ❤️</div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
