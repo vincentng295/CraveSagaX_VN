@@ -12,7 +12,7 @@
       padding: 24px;
     }
     .container {
-      max-width: 900px;
+      max-width: 980px;
       margin: 0 auto;
       background: #fff;
       padding: 24px;
@@ -33,9 +33,11 @@
       display: flex;
       gap: 10px;
       margin-bottom: 16px;
+      flex-wrap: wrap;
     }
     .search-box {
       flex: 1;
+      min-width: 200px;
       padding: 8px 12px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
@@ -95,6 +97,16 @@
       font-weight: 600;
       white-space: nowrap;
     }
+    .chap-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #f3f4f6;
+      color: #374151;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: monospace;
+      white-space: nowrap;
+    }
     .speaker-none { color: #9ca3af; }
     .btn-save.saved { background: #10b981; }
     .status-bar {
@@ -109,7 +121,7 @@
       color: #6b7280;
       white-space: nowrap;
     }
-    .sort-select {
+    .select-box {
       padding: 8px 10px;
       border: 1px solid #d1d5db;
       border-radius: 6px;
@@ -127,7 +139,7 @@
         <p>Thu thập, chỉnh sửa câu thoại đã dịch hoặc Import/Export file .json</p>
       </div>
       <div class="toolbar">
-        <button class="btn btn-success" id="btn-export">📥 Export JSON</button>
+        <button class="btn btn-success" id="btn-export">📥 Export JSON (Filtered)</button>
         <button class="btn btn-primary" id="btn-import-trigger">📤 Import JSON</button>
         <input type="file" id="file-import" accept=".json" style="display: none;">
       </div>
@@ -135,7 +147,10 @@
 
     <div class="toolbar">
       <input type="text" id="search-input" class="search-box" placeholder="Tìm kiếm câu thoại gốc hoặc bản dịch...">
-      <select id="sort-select" class="sort-select">
+      <select id="chap-filter-select" class="select-box">
+        <option value="">Tất cả Chap/File</option>
+      </select>
+      <select id="sort-select" class="select-box">
         <option value="time-desc">Mới nhất trước</option>
         <option value="time-asc" selected>Cũ nhất trước</option>
         <option value="key-asc">Theo A-Z</option>
@@ -146,11 +161,12 @@
     <table>
       <thead>
         <tr>
-          <th style="width: 11%;">Nhân vật</th>
-          <th style="width: 30%;">Tiếng Anh (Gốc)</th>
-          <th style="width: 28%;">Tiếng Việt (Bản dịch)</th>
-          <th style="width: 16%;">Thời gian</th>
-          <th style="width: 15%;">Thao tác</th>
+          <th style="width: 12%;">Chap / File</th>
+          <th style="width: 10%;">Nhân vật</th>
+          <th style="width: 28%;">Tiếng Anh (Gốc)</th>
+          <th style="width: 25%;">Tiếng Việt (Bản dịch)</th>
+          <th style="width: 13%;">Thời gian</th>
+          <th style="width: 12%;">Thao tác</th>
         </tr>
       </thead>
       <tbody id="dict-table-body">

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const tableBody = document.getElementById('dict-table-body');
     const searchInput = document.getElementById('search-input');
+    const chapFilterSelect = document.getElementById('chap-filter-select');
     const totalCountEl = document.getElementById('total-count');
     const btnExport = document.getElementById('btn-export');
     const btnImportTrigger = document.getElementById('btn-import-trigger');
@@ -8,12 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClearAll = document.getElementById('btn-clear-all');
 
     let translationDict = {};
-    let sortMode = 'time-asc'; // 'time-desc' | 'time-asc' | 'key-asc'
+    let currentFilteredDict = {}; // Lưu giữ kết quả đã filter để Export JSON
+    let sortMode = 'time-asc';
 
-    // Dict entry giờ hỗ trợ 2 dạng (tương thích ngược với dữ liệu cũ):
-    //   - string: bản dịch thuần, không rõ nhân vật, không có time
-    //   - object { translated, name, time }: bản dịch kèm tên nhân vật + thời điểm
-    //     thu thập (unix giây). "time" có thể vắng mặt ở dữ liệu cũ hơn.
     function getEntryValue(entry) {
         if (typeof entry === 'string') return entry;
         if (entry && typeof entry === 'object') return entry.translated || '';
@@ -25,24 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     }
 
-    function getEntryTime(entry) {
-        if (entry && typeof entry === 'object' && typeof entry.time === 'number') return entry.time;
-        return 0; // dữ liệu cũ chưa có time -> coi như cũ nhất, sẽ được ép time khi migrate
+    function getEntryChap(entry) {
+        if (entry && typeof entry === 'object') return entry.chap || '';
+        return '';
     }
 
-    // "seq" là mốc thứ tự THẬT do injected.js chụp lại tại thời điểm câu thoại
-    // được xử lý (đồng bộ, đúng thứ tự xuất hiện trong file kịch bản) — không
-    // bị xáo trộn như "time" khi nhiều câu được dịch song song và các request
-    // Google Translate trả lời không theo đúng thứ tự. Dữ liệu cũ (thu thập
-    // trước khi có seq) sẽ không có trường này.
+    function getEntryTime(entry) {
+        if (entry && typeof entry === 'object' && typeof entry.time === 'number') return entry.time;
+        return 0;
+    }
+
     function getEntrySeq(entry) {
         if (entry && typeof entry === 'object' && typeof entry.seq === 'number') return entry.seq;
         return null;
     }
 
-    // Giá trị dùng để SO SÁNH khi sort theo thời gian: ưu tiên "seq" nếu có
-    // (chính xác theo đúng thứ tự thoại); nếu không (dữ liệu cũ) thì mới rơi
-    // về "time" (giây) — nhân 1000 để tạm quy về cùng đơn vị mili-giây với seq.
     function getSortableOrderValue(entry) {
         const seq = getEntrySeq(entry);
         if (seq !== null) return seq;
@@ -55,14 +50,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return d.toLocaleString('vi-VN');
     }
 
-    // Cập nhật bản dịch cho 1 key, GIỮ NGUYÊN tên nhân vật + time nếu entry đang có
     function updateEntryTranslation(key, newTranslated) {
         const entry = translationDict[key];
         if (entry && typeof entry === 'object') {
             translationDict[key] = { ...entry, translated: newTranslated };
         } else {
-            // entry dạng string cũ -> chuẩn hoá về object, ép time hiện tại luôn
-            translationDict[key] = { translated: newTranslated, name: null, time: nowUnix() };
+            translationDict[key] = { translated: newTranslated, name: null, chap: null, time: nowUnix() };
         }
     }
 
@@ -70,12 +63,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(Date.now() / 1000);
     }
 
-    // Chuẩn hoá 1 entry: nếu thiếu "time" -> ép thành unix hiện tại (và chuyển
-    // entry dạng string cũ thành object để có chỗ chứa time). Trả về entry mới
-    // và cờ cho biết có thay đổi hay không, để chỉ ghi lại storage khi cần.
     function ensureEntryTime(entry) {
         if (typeof entry === 'string') {
-            return { changed: true, entry: { translated: entry, name: null, time: nowUnix() } };
+            return { changed: true, entry: { translated: entry, name: null, chap: null, time: nowUnix() } };
         }
         if (entry && typeof entry === 'object') {
             if (typeof entry.time !== 'number') {
@@ -86,8 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return { changed: false, entry };
     }
 
-    // Duyệt toàn bộ dict, ép "time" cho các entry còn thiếu. Trả về true nếu có
-    // thay đổi (để gọi saveDictionary() sau khi migrate).
     function migrateMissingTimes() {
         let changed = false;
         Object.keys(translationDict).forEach((key) => {
@@ -100,19 +88,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return changed;
     }
 
-    // Load dữ liệu từ chrome.storage.local
     async function loadDictionary() {
         chrome.storage.local.get({ translationDict: {} }, async (result) => {
             translationDict = result.translationDict || {};
 
-            // Nếu từ điển đang trống -> Tự động nạp pretranslated.json
             if (Object.keys(translationDict).length === 0) {
                 try {
                     const response = await fetch(chrome.runtime.getURL('pretranslated.json'));
                     translationDict = await response.json();
-                    saveDictionary(); // Lưu lại vào storage
+                    saveDictionary();
                 } catch (err) {
-                    console.warn("Không tìm thấy hoặc không thể đọc file pretranslated.json", err);
+                    console.warn("Không tìm thấy pretranslated.json", err);
                 }
             }
 
@@ -120,11 +106,31 @@ document.addEventListener('DOMContentLoaded', () => {
             if (changed) {
                 saveDictionary();
             }
+            populateChapFilterOptions();
             renderTable();
         });
     }
 
-    // Sắp xếp danh sách key theo sortMode hiện tại
+    // Cập nhật danh sách Chap trong Filter Dropdown
+    function populateChapFilterOptions() {
+        const selectedChap = chapFilterSelect.value;
+        const chapSet = new Set();
+
+        Object.values(translationDict).forEach(entry => {
+            const chap = getEntryChap(entry);
+            if (chap) chapSet.add(chap);
+        });
+
+        chapFilterSelect.innerHTML = '<option value="">Tất cả Chap/File</option>';
+        Array.from(chapSet).sort().forEach(chap => {
+            const opt = document.createElement('option');
+            opt.value = chap;
+            opt.textContent = chap;
+            if (chap === selectedChap) opt.selected = true;
+            chapFilterSelect.appendChild(opt);
+        });
+    }
+
     function sortKeys(keys) {
         const sorted = [...keys];
         if (sortMode === 'time-desc') {
@@ -137,25 +143,35 @@ document.addEventListener('DOMContentLoaded', () => {
         return sorted;
     }
 
-    // Render bảng danh sách
-    function renderTable(filter = '') {
+    function renderTable() {
+        const filterText = searchInput.value.trim().toLowerCase();
+        const filterChap = chapFilterSelect.value;
+
         tableBody.innerHTML = '';
         const keys = sortKeys(Object.keys(translationDict));
         let count = 0;
+        currentFilteredDict = {}; // Xóa và cấp lại danh sách lọc
 
         keys.forEach((key) => {
             const entry = translationDict[key];
             const value = getEntryValue(entry);
             const speakerName = getEntryName(entry);
+            const chapName = getEntryChap(entry);
             const entryTime = getEntryTime(entry);
-            if (filter && !key.toLowerCase().includes(filter) && !value.toLowerCase().includes(filter) && !speakerName.toLowerCase().includes(filter)) {
+
+            // Điều kiện lọc
+            if (filterChap && chapName !== filterChap) return;
+            if (filterText && !key.toLowerCase().includes(filterText) && !value.toLowerCase().includes(filterText) && !speakerName.toLowerCase().includes(filterText)) {
                 return;
             }
 
+            // Lưu câu hợp lệ vào filtered object
+            currentFilteredDict[key] = entry;
             count++;
-            const tr = document.createElement('tr');
 
+            const tr = document.createElement('tr');
             tr.innerHTML = `
+                <td>${chapName ? `<span class="chap-badge">${escapeHtml(chapName)}</span>` : '<span class="speaker-none">—</span>'}</td>
                 <td>${speakerName ? `<span class="speaker-badge">${escapeHtml(speakerName)}</span>` : '<span class="speaker-none">—</span>'}</td>
                 <td><strong>${escapeHtml(key)}</strong></td>
                 <td>
@@ -173,9 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.appendChild(tr);
         });
 
-        totalCountEl.innerText = `Tổng số câu: ${count} / ${keys.length}`;
+        totalCountEl.innerText = `Hiển thị: ${count} / ${keys.length} câu`;
 
-        // Lắng nghe sự kiện sửa input (tự động lưu khi rời khỏi ô nhập)
         document.querySelectorAll('.input-edit').forEach(input => {
             input.addEventListener('change', (e) => {
                 const origKey = e.target.getAttribute('data-key');
@@ -187,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Lắng nghe sự kiện bấm nút "Lưu" — lưu ngay bản dịch hiện tại của dòng đó
         document.querySelectorAll('.btn-save').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const key = e.target.getAttribute('data-key');
@@ -199,7 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateEntryTranslation(key, newVal);
                 saveDictionary();
 
-                // Phản hồi trực quan ngắn để người dùng biết đã lưu
                 const originalLabel = e.target.innerText;
                 e.target.innerText = '✓ Đã lưu';
                 e.target.classList.add('saved');
@@ -210,35 +223,34 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Lắng nghe sự kiện xóa
         document.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const targetKey = e.target.getAttribute('data-key');
                 delete translationDict[targetKey];
                 saveDictionary();
-                renderTable(searchInput.value.trim().toLowerCase());
+                populateChapFilterOptions();
+                renderTable();
             });
         });
     }
 
     function saveDictionary() {
-        chrome.storage.local.set({ translationDict }, () => {
-            // Thông báo cập nhật thành công nếu cần
-        });
+        chrome.storage.local.set({ translationDict });
     }
 
-    // Export dữ liệu dạng JSON
+    // Export CHỈ xuất các item trong currentFilteredDict
     btnExport.addEventListener('click', () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(translationDict, null, 2));
+        const filterChap = chapFilterSelect.value;
+        const fileNameSuffix = filterChap ? `_${filterChap.replace('.txt', '')}` : '';
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentFilteredDict, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `CraveSagaX_Translation_${new Date().toISOString().slice(0, 10)}.json`);
+        downloadAnchor.setAttribute("download", `CraveSagaX_Translation${fileNameSuffix}_${new Date().toISOString().slice(0, 10)}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
     });
 
-    // Import dữ liệu từ JSON
     btnImportTrigger.addEventListener('click', () => fileImport.click());
 
     fileImport.addEventListener('change', (e) => {
@@ -250,10 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const importedDict = JSON.parse(event.target.result);
                 if (typeof importedDict === 'object' && !Array.isArray(importedDict)) {
-                    // Merge dữ liệu mới vào dữ liệu cũ
                     translationDict = { ...translationDict, ...importedDict };
-                    migrateMissingTimes(); // ép time cho entry import thiếu time
+                    migrateMissingTimes();
                     saveDictionary();
+                    populateChapFilterOptions();
                     renderTable();
                     alert("Import từ điển thành công!");
                 } else {
@@ -266,25 +278,22 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsText(file);
     });
 
-    // Tìm kiếm
-    searchInput.addEventListener('input', (e) => {
-        renderTable(e.target.value.trim().toLowerCase());
-    });
+    searchInput.addEventListener('input', () => renderTable());
+    chapFilterSelect.addEventListener('change', () => renderTable());
 
-    // Sắp xếp
     const sortSelect = document.getElementById('sort-select');
     if (sortSelect) {
         sortSelect.addEventListener('change', (e) => {
             sortMode = e.target.value;
-            renderTable(searchInput.value.trim().toLowerCase());
+            renderTable();
         });
     }
 
-    // Xóa tất cả
     btnClearAll.addEventListener('click', () => {
         if (confirm("Bạn có chắc chắn muốn xóa toàn bộ từ điển đã thu thập?")) {
             translationDict = {};
             saveDictionary();
+            populateChapFilterOptions();
             renderTable();
         }
     });
