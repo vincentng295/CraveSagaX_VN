@@ -12,6 +12,33 @@ let customTranslationDict = {};
 // phía dưới cùng tham chiếu tới đúng 1 giá trị.
 const TRANSLATED_MARKER = '\u200B';
 
+// ------------------------------------------------------------------
+// Bộ đếm "seq" toàn cục — dùng để SẮP XẾP đúng thứ tự THẬT mà các câu thoại
+// xuất hiện, KHÔNG phải để hiển thị "thời gian" cho người dùng.
+//
+// Vấn đề: khi dịch 1 file kịch bản (processStoryScript), nhiều dòng "msg,"
+// được dịch SONG SONG (Promise.all, mỗi dòng tự gọi Google Translate API
+// riêng). Các API đó trả lời KHÔNG theo đúng thứ tự dòng trong file, nên nếu
+// content.js chỉ dựa vào Date.now() tại thời điểm NHẬN được message
+// SAVE_NEW_TRANSLATION để làm mốc sắp xếp, thứ tự hiển thị ở trang Options sẽ
+// bị xáo trộn theo thứ tự mạng trả lời chứ không theo thứ tự hội thoại.
+//
+// Giải pháp: chụp lại "seq" NGAY TẠI ĐIỂM BẮT ĐẦU xử lý từng câu — tức là
+// đồng bộ, TRƯỚC await đầu tiên — đúng lúc code còn chạy tuần tự theo thứ tự
+// dòng trong file kịch bản (xem giải thích tương tự ở currentSpeaker trong
+// processStoryScript bên dưới). Giá trị seq này được gửi kèm qua postMessage;
+// content.js chỉ việc LƯU LẠI, không tự tính toán gì thêm.
+//
+// Base khởi tạo = Date.now() để seq luôn tăng dần XUYÊN SUỐT nhiều lần load
+// trang (F5, chuyển màn, v.v.) — tránh trường hợp câu mới ở phiên sau bị gán
+// seq nhỏ hơn (vì counter reset về 0) rồi bị sort lên TRƯỚC các câu cũ đã lưu
+// từ phiên trước.
+let __translationSeqCounter = Date.now();
+function nextTranslationSeq() {
+    __translationSeqCounter += 1;
+    return __translationSeqCounter;
+}
+
 // customTranslationDict giờ hỗ trợ 2 dạng giá trị cho mỗi key (để tương thích
 // ngược với các bản dịch đã thu thập trước đây):
 //   - string: bản dịch thuần (không có thông tin nhân vật) — dạng cũ
@@ -153,6 +180,7 @@ window.addEventListener('message', (event) => {
             if (!window.is_translated) return text;
             if (!text || !text.trim()) return text;
             const cleanText = text.trim();
+            const seq = nextTranslationSeq(); // chụp thứ tự NGAY tại đây (đồng bộ) — xem giải thích ở đầu file
 
             // 1. Kiểm tra từ điển Custom Dict trước (đã import hoặc thu thập)
             if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
@@ -177,7 +205,8 @@ window.addEventListener('message', (event) => {
                 window.postMessage({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
-                    translated: translated
+                    translated: translated,
+                    seq
                 }, '*');
 
                 return translated;
@@ -334,6 +363,11 @@ window.addEventListener('message', (event) => {
     // tới bản thân việc dịch.
     async function translateSingleText(text, speakerName = null) {
         if (!text || !text.trim()) return text;
+        // Chụp lại "seq" NGAY TẠI ĐÂY — đồng bộ, trước await đầu tiên. Vì
+        // processStoryScript gọi hàm này bên trong lines.map(async...), phần
+        // thân hàm chạy tới đây vẫn còn đồng bộ và đúng thứ tự dòng trong file,
+        // bất kể fetch() bên dưới hoàn thành theo thứ tự nào sau đó.
+        const seq = nextTranslationSeq();
         const cleanText = text.replace(/\\,/g, ',');
 
         // 1. Ưu tiên tra cứu từ Custom Dict do người dùng nhập/import
@@ -368,7 +402,8 @@ window.addEventListener('message', (event) => {
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
                     translated: translated,
-                    speaker: speakerName || undefined
+                    speaker: speakerName || undefined,
+                    seq
                 }, '*');
 
                 return TRANSLATED_MARKER + result; 

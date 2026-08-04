@@ -104,6 +104,18 @@
       display: flex;
       justify-content: space-between;
     }
+    .time-cell {
+      font-size: 12px;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    .sort-select {
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -123,15 +135,21 @@
 
     <div class="toolbar">
       <input type="text" id="search-input" class="search-box" placeholder="Tìm kiếm câu thoại gốc hoặc bản dịch...">
+      <select id="sort-select" class="sort-select">
+        <option value="time-desc">Mới nhất trước</option>
+        <option value="time-asc">Cũ nhất trước</option>
+        <option value="key-asc">Theo A-Z</option>
+      </select>
       <button class="btn btn-danger" id="btn-clear-all">Xóa tất cả</button>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th style="width: 12%;">Nhân vật</th>
-          <th style="width: 38%;">Tiếng Anh (Gốc)</th>
-          <th style="width: 35%;">Tiếng Việt (Bản dịch)</th>
+          <th style="width: 11%;">Nhân vật</th>
+          <th style="width: 30%;">Tiếng Anh (Gốc)</th>
+          <th style="width: 28%;">Tiếng Việt (Bản dịch)</th>
+          <th style="width: 16%;">Thời gian</th>
           <th style="width: 15%;">Thao tác</th>
         </tr>
       </thead>
