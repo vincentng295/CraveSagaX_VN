@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClearAll = document.getElementById('btn-clear-all');
 
     let translationDict = {};
-    let sortMode = 'time-desc'; // 'time-desc' | 'time-asc' | 'key-asc'
+    let sortMode = 'time-asc'; // 'time-desc' | 'time-asc' | 'key-asc'
 
     // Dict entry giờ hỗ trợ 2 dạng (tương thích ngược với dữ liệu cũ):
     //   - string: bản dịch thuần, không rõ nhân vật, không có time
