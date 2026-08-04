@@ -26,12 +26,16 @@
     "https://*.nutaku.com/*",
     "https://*.ero-labs.com/*",
     "https://d2z1bqkh6aowmt.cloudfront.net/client/*",
+    "https://d1njotu2ezlj2j.cloudfront.net/g/client/*",
+    "https://*.johren.net/*",
     "https://translate.googleapis.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
+        "https://www.johren.net/games/cravesaga-en/play/",
+        "https://d1njotu2ezlj2j.cloudfront.net/g/client/1.113.0/index_johren.html",
         "https://d2z1bqkh6aowmt.cloudfront.net/client/1.113.0/index_erolabs.html?*"
       ],
       "js": ["content.js"],
@@ -41,6 +45,8 @@
     {
       "matches": [
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
+        "https://www.johren.net/games/cravesaga-en/play/",
+        "https://d1njotu2ezlj2j.cloudfront.net/g/client/1.113.0/index_johren.html",
         "https://d2z1bqkh6aowmt.cloudfront.net/client/1.113.0/index_erolabs.html?*"
       ],
       "js": ["injected.js"],
