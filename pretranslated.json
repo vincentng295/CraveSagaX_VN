@@ -1,0 +1,2096 @@
+{
+  "90 days consecutive login": {
+    "name": null,
+    "seq": 1785861550328,
+    "time": 1785861694,
+    "translated": "Đăng nhập liên tục 90 ngày"
+  },
+  "Achieve player rank 80!": {
+    "name": null,
+    "seq": 1785861550331,
+    "time": 1785861694,
+    "translated": "Đạt Hạng người chơi 80!"
+  },
+  "Adamas：Raid 1": {
+    "name": null,
+    "seq": 1785861550253,
+    "time": 1785861674,
+    "translated": "Adamas: Raid 1"
+  },
+  "Adamas：Raid 2": {
+    "name": null,
+    "seq": 1785861550254,
+    "time": 1785861674,
+    "translated": "Adamas: Raid 2"
+  },
+  "Answer the first question correctly for 2 consecutive days.": {
+    "name": null,
+    "seq": 1785861550445,
+    "time": 1785861695,
+    "translated": "Trả lời đúng câu hỏi đầu tiên trong 2 ngày liên tiếp."
+  },
+  "Boun": {
+    "name": null,
+    "seq": 1785861550074,
+    "time": 1785861610,
+    "translated": "Boun"
+  },
+  "Chapter 1  EP 1": {
+    "name": null,
+    "seq": 1785861550179,
+    "time": 1785861648,
+    "translated": "Chương 1 Tập 1"
+  },
+  "Chapter 1  EP 2": {
+    "name": null,
+    "seq": 1785861550180,
+    "time": 1785861648,
+    "translated": "Chương 1 Tập 2"
+  },
+  "Chapter 1  EP 3": {
+    "name": null,
+    "seq": 1785861550181,
+    "time": 1785861648,
+    "translated": "Chương 1 Tập 3"
+  },
+  "Chapter 10 EP 1": {
+    "name": null,
+    "seq": 1785861550206,
+    "time": 1785861654,
+    "translated": "Chương 10 Tập 1"
+  },
+  "Chapter 10 EP 2": {
+    "name": null,
+    "seq": 1785861550207,
+    "time": 1785861654,
+    "translated": "Chương 10 Tập 2"
+  },
+  "Chapter 10 EP 3": {
+    "name": null,
+    "seq": 1785861550208,
+    "time": 1785861654,
+    "translated": "Chương 10 Tập 3"
+  },
+  "Chapter 11 EP 1": {
+    "name": null,
+    "seq": 1785861550209,
+    "time": 1785861654,
+    "translated": "Chương 11 Tập 1"
+  },
+  "Chapter 11 EP 2": {
+    "name": null,
+    "seq": 1785861550210,
+    "time": 1785861654,
+    "translated": "Chương 11 Tập 2"
+  },
+  "Chapter 11 EP 3": {
+    "name": null,
+    "seq": 1785861550211,
+    "time": 1785861654,
+    "translated": "Chương 11 Tập 3"
+  },
+  "Chapter 12 EP 1": {
+    "name": null,
+    "seq": 1785861550212,
+    "time": 1785861654,
+    "translated": "Chương 12 Tập 1"
+  },
+  "Chapter 12 EP 2": {
+    "name": null,
+    "seq": 1785861550213,
+    "time": 1785861654,
+    "translated": "Chương 12 Tập 2"
+  },
+  "Chapter 12 EP 3": {
+    "name": null,
+    "seq": 1785861550214,
+    "time": 1785861654,
+    "translated": "Chương 12 Tập 3"
+  },
+  "Chapter 13 EP 1": {
+    "name": null,
+    "seq": 1785861550215,
+    "time": 1785861654,
+    "translated": "Chương 13 Tập 1"
+  },
+  "Chapter 13 EP 2": {
+    "name": null,
+    "seq": 1785861550216,
+    "time": 1785861654,
+    "translated": "Chương 13 Tập 2"
+  },
+  "Chapter 13 EP 3": {
+    "name": null,
+    "seq": 1785861550217,
+    "time": 1785861654,
+    "translated": "Chương 13 Tập 3"
+  },
+  "Chapter 14 EP 1": {
+    "name": null,
+    "seq": 1785861550218,
+    "time": 1785861656,
+    "translated": "Chương 14 Tập 1"
+  },
+  "Chapter 14 EP 2": {
+    "name": null,
+    "seq": 1785861550219,
+    "time": 1785861656,
+    "translated": "Chương 14 Tập 2"
+  },
+  "Chapter 14 EP 3": {
+    "name": null,
+    "seq": 1785861550220,
+    "time": 1785861656,
+    "translated": "Chương 14 Tập 3"
+  },
+  "Chapter 2  EP 1": {
+    "name": null,
+    "seq": 1785861550182,
+    "time": 1785861648,
+    "translated": "Chương 2 Tập 1"
+  },
+  "Chapter 2  EP 2": {
+    "name": null,
+    "seq": 1785861550183,
+    "time": 1785861648,
+    "translated": "Chương 2 Tập 2"
+  },
+  "Chapter 2  EP 3": {
+    "name": null,
+    "seq": 1785861550184,
+    "time": 1785861648,
+    "translated": "Chương 2 Tập 3"
+  },
+  "Chapter 3  EP 1": {
+    "name": null,
+    "seq": 1785861550185,
+    "time": 1785861648,
+    "translated": "Chương 3 Tập 1"
+  },
+  "Chapter 3  EP 2": {
+    "name": null,
+    "seq": 1785861550186,
+    "time": 1785861648,
+    "translated": "Chương 3 Tập 2"
+  },
+  "Chapter 3  EP 3": {
+    "name": null,
+    "seq": 1785861550187,
+    "time": 1785861648,
+    "translated": "Chương 3 Tập 3"
+  },
+  "Chapter 4  EP 1": {
+    "name": null,
+    "seq": 1785861550188,
+    "time": 1785861648,
+    "translated": "Chương 4 Tập 1"
+  },
+  "Chapter 4  EP 2": {
+    "name": null,
+    "seq": 1785861550189,
+    "time": 1785861648,
+    "translated": "Chương 4 Tập 2"
+  },
+  "Chapter 4  EP 3": {
+    "name": null,
+    "seq": 1785861550190,
+    "time": 1785861648,
+    "translated": "Chương 4 Tập 3"
+  },
+  "Chapter 5  EP 1": {
+    "name": null,
+    "seq": 1785861550191,
+    "time": 1785861648,
+    "translated": "Chương 5 Tập 1"
+  },
+  "Chapter 5  EP 2": {
+    "name": null,
+    "seq": 1785861550192,
+    "time": 1785861648,
+    "translated": "Chương 5 Tập 2"
+  },
+  "Chapter 5  EP 3": {
+    "name": null,
+    "seq": 1785861550193,
+    "time": 1785861648,
+    "translated": "Chương 5 Tập 3"
+  },
+  "Chapter 6  EP 1": {
+    "name": null,
+    "seq": 1785861550194,
+    "time": 1785861648,
+    "translated": "Chương 6 Tập 1"
+  },
+  "Chapter 6  EP 2": {
+    "name": null,
+    "seq": 1785861550195,
+    "time": 1785861648,
+    "translated": "Chương 6 Tập 2"
+  },
+  "Chapter 6  EP 3": {
+    "name": null,
+    "seq": 1785861550196,
+    "time": 1785861648,
+    "translated": "Chương 6 Tập 3"
+  },
+  "Chapter 7  EP 1": {
+    "name": null,
+    "seq": 1785861550197,
+    "time": 1785861654,
+    "translated": "Chương 7 Tập 1"
+  },
+  "Chapter 7  EP 2": {
+    "name": null,
+    "seq": 1785861550198,
+    "time": 1785861654,
+    "translated": "Chương 7 Tập 2"
+  },
+  "Chapter 7  EP 3": {
+    "name": null,
+    "seq": 1785861550199,
+    "time": 1785861654,
+    "translated": "Chương 7 Tập 3"
+  },
+  "Chapter 8 EP 2": {
+    "name": null,
+    "seq": 1785861550201,
+    "time": 1785861654,
+    "translated": "Chương 8 Tập 2"
+  },
+  "Chapter 8 EP 3": {
+    "name": null,
+    "seq": 1785861550202,
+    "time": 1785861654,
+    "translated": "Chương 8 Tập 3"
+  },
+  "Chapter 8 EP１": {
+    "name": null,
+    "seq": 1785861550200,
+    "time": 1785861654,
+    "translated": "Chương 8 Tập 1"
+  },
+  "Chapter 9 EP 1": {
+    "name": null,
+    "seq": 1785861550203,
+    "time": 1785861654,
+    "translated": "Chương 9 Tập 1"
+  },
+  "Chapter 9 EP 2": {
+    "name": null,
+    "seq": 1785861550204,
+    "time": 1785861654,
+    "translated": "Chương 9 Tập 2"
+  },
+  "Chapter 9 EP 3": {
+    "name": null,
+    "seq": 1785861550205,
+    "time": 1785861654,
+    "translated": "Chương 9 Tập 3"
+  },
+  "Character": {
+    "name": null,
+    "seq": 1785861550143,
+    "time": 1785861638,
+    "translated": "Nhân vật"
+  },
+  "Clear 12 weekly missions!": {
+    "name": null,
+    "seq": 1785861550306,
+    "time": 1785861693,
+    "translated": "Hoàn thành 12 nhiệm vụ tuần!"
+  },
+  "Clear 6 Stages of the Special Martial Arts Training Competition": {
+    "name": null,
+    "seq": 1785861550335,
+    "time": 1785861694,
+    "translated": "Vượt 6 ải Đại Hội Huấn Luyện Võ Thuật Đặc Biệt"
+  },
+  "Clear a weapon quest 300 times.": {
+    "name": null,
+    "seq": 1785861550327,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ vũ khí 300 lần."
+  },
+  "Clear any quest 10 times!": {
+    "name": null,
+    "seq": 1785861550308,
+    "time": 1785861693,
+    "translated": "Vượt ải bất kỳ 10 lần!"
+  },
+  "Clear any quest 100 times!": {
+    "name": null,
+    "seq": 1785861550301,
+    "time": 1785861693,
+    "translated": "Vượt ải bất kỳ 100 lần!"
+  },
+  "Clear any quest 20 times!": {
+    "name": null,
+    "seq": 1785861550309,
+    "time": 1785861693,
+    "translated": "Vượt ải bất kỳ 20 lần!"
+  },
+  "Clear any quest 40 times!": {
+    "name": null,
+    "seq": 1785861550297,
+    "time": 1785861693,
+    "translated": "Vượt ải bất kỳ 40 lần!"
+  },
+  "Clear any quest 60 times!": {
+    "name": null,
+    "seq": 1785861550299,
+    "time": 1785861693,
+    "translated": "Vượt ải bất kỳ 60 lần!"
+  },
+  "Clear any quest 80 times!": {
+    "name": null,
+    "seq": 1785861550300,
+    "time": 1785861693,
+    "translated": "Vượt ải bất kỳ 80 lần!"
+  },
+  "Clear daily training \"Gold Collection_EXTRA\"": {
+    "name": null,
+    "seq": 1785861550342,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Sưu tầm Vàng_EXTRA\""
+  },
+  "Clear daily training \"Gold Collection_HARD\"": {
+    "name": null,
+    "seq": 1785861550341,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Sưu tầm Vàng_HARD\""
+  },
+  "Clear daily training \"Gold Collection_NORMAL\"": {
+    "name": null,
+    "seq": 1785861550340,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Sưu tầm Vàng_NORMAL\""
+  },
+  "Clear daily training \"Sacred Training_EXTRA\"": {
+    "name": null,
+    "seq": 1785861550348,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Thánh vật_EXTRA\""
+  },
+  "Clear daily training \"Sacred Training_HARD\"": {
+    "name": null,
+    "seq": 1785861550347,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Thánh vật_HARD\""
+  },
+  "Clear daily training \"Sacred Training_NORMAL\"": {
+    "name": null,
+    "seq": 1785861550346,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Thánh vật_NORMAL\""
+  },
+  "Clear daily training \"Soulmate Training_EXTRA\"": {
+    "name": null,
+    "seq": 1785861550345,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Tâm giao_EXTRA\""
+  },
+  "Clear daily training \"Soulmate Training_HARD\"": {
+    "name": null,
+    "seq": 1785861550344,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Tâm giao_HARD\""
+  },
+  "Clear daily training \"Soulmate Training_NORMAL\"": {
+    "name": null,
+    "seq": 1785861550343,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Tâm giao_NORMAL\""
+  },
+  "Clear daily training \"Weapon Training_EXTRA\"": {
+    "name": null,
+    "seq": 1785861550351,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Vũ khí_EXTRA\""
+  },
+  "Clear daily training \"Weapon Training_HARD\"": {
+    "name": null,
+    "seq": 1785861550350,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Vũ khí_HARD\""
+  },
+  "Clear daily training \"Weapon Training_NORMAL\"": {
+    "name": null,
+    "seq": 1785861550349,
+    "time": 1785861694,
+    "translated": "Vượt ải huấn luyện ngày \"Huấn luyện Vũ khí_NORMAL\""
+  },
+  "Clear daily training 10 times!": {
+    "name": null,
+    "seq": 1785861550310,
+    "time": 1785861693,
+    "translated": "Vượt ải huấn luyện ngày 10 lần!"
+  },
+  "Clear daily training 15 times!": {
+    "name": null,
+    "seq": 1785861550311,
+    "time": 1785861693,
+    "translated": "Vượt ải huấn luyện ngày 15 lần!"
+  },
+  "Clear daily training 2 times!": {
+    "name": null,
+    "seq": 1785861550285,
+    "time": 1785861691,
+    "translated": "Vượt ải huấn luyện ngày 2 lần!"
+  },
+  "Clear daily training 20 times!": {
+    "name": null,
+    "seq": 1785861550302,
+    "time": 1785861693,
+    "translated": "Vượt ải huấn luyện ngày 20 lần!"
+  },
+  "Clear daily training 3 times!": {
+    "name": null,
+    "seq": 1785861550286,
+    "time": 1785861691,
+    "translated": "Vượt ải huấn luyện ngày 3 lần!"
+  },
+  "Clear daily training 4 times!": {
+    "name": null,
+    "seq": 1785861550287,
+    "time": 1785861691,
+    "translated": "Vượt ải huấn luyện ngày 4 lần!"
+  },
+  "Clear daily training once!": {
+    "name": null,
+    "seq": 1785861550284,
+    "time": 1785861691,
+    "translated": "Vượt ải huấn luyện ngày 1 lần!"
+  },
+  "Clear the main quest \"Chapter 1 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550352,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 1 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 1 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550355,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 1 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 1 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550353,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 1 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 1 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550356,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 1 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 1 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550354,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 1 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 1 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550357,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 1 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 10 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550405,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 10 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 10 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550408,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 10 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 10 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550406,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 10 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 10 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550409,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 10 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 10 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550407,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 10 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 10 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550410,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 10 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 11 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550411,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 11 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 11 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550414,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 11 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 11 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550412,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 11 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 11 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550415,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 11 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 11 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550413,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 11 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 11 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550336,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 11 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 12 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550416,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 12 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 12 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550419,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 12 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 12 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550417,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 12 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 12 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550420,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 12 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 12 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550418,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 12 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 12 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550337,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 12 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 13 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550421,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 13 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 13 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550424,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 13 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 13 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550422,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 13 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 13 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550425,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 13 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 13 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550423,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 13 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 13 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550338,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 13 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 14 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550426,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 14 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 14 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550429,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 14 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 14 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550427,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 14 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 14 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550430,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 14 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 14 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550428,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 14 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 14 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550339,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 14 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 2 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550358,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 2 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 2 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550361,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 2 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 2 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550359,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 2 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 2 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550362,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 2 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 2 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550360,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 2 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 2 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550363,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 2 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 3 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550364,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 3 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 3 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550367,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 3 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 3 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550365,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 3 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 3 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550368,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 3 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 3 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550366,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 3 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 3 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550369,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 3 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 4 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550370,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 4 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 4 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550373,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 4 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 4 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550371,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 4 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 4 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550374,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 4 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 4 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550372,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 4 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 4 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550375,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 4 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 5 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550376,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 5 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 5 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550379,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 5 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 5 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550377,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 5 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 5 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550380,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 5 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 5 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550378,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 5 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 5 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550381,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 5 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 6 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550382,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 6 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 6 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550385,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 6 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 6 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550383,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 6 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 6 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550386,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 6 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 6 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550384,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 6 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 6 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550387,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 6 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 7 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550388,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 7 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 7 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550391,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 7 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 7 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550389,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 7 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 7 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550392,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 7 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 7 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550390,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 7 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 7 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550393,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 7 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 8 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550394,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 8 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 8 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550397,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 8 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 8 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550395,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 8 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 8 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550398,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 8 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 8 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550396,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 8 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 8 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550399,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 8 Tập 3-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 9 EP 1-5\"": {
+    "name": null,
+    "seq": 1785861550400,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 9 Tập 1-5\""
+  },
+  "Clear the main quest \"Chapter 9 EP 1-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550403,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 9 Tập 1-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 9 EP 2-5\"": {
+    "name": null,
+    "seq": 1785861550401,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 9 Tập 2-5\""
+  },
+  "Clear the main quest \"Chapter 9 EP 2-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550404,
+    "time": 1785861695,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 9 Tập 2-5_HARD\""
+  },
+  "Clear the main quest \"Chapter 9 EP 3-5\"": {
+    "name": null,
+    "seq": 1785861550402,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 9 Tập 3-5\""
+  },
+  "Clear the main quest \"Chapter 9 EP 3-5_HARD\"": {
+    "name": null,
+    "seq": 1785861550332,
+    "time": 1785861694,
+    "translated": "Vượt ải nhiệm vụ chính \"Chương 9 Tập 3-5_HARD\""
+  },
+  "Complete 180 stage missions": {
+    "name": null,
+    "seq": 1785861550446,
+    "time": 1785861695,
+    "translated": "Hoàn thành 180 nhiệm vụ màn chơi"
+  },
+  "Complete 6 daily missions!": {
+    "name": null,
+    "seq": 1785861550288,
+    "time": 1785861691,
+    "translated": "Hoàn thành 6 nhiệm vụ hàng ngày!"
+  },
+  "Confirm": {
+    "name": null,
+    "seq": 1785861550040,
+    "time": 1785861559,
+    "translated": "Xác nhận"
+  },
+  "Daily": {
+    "name": null,
+    "seq": 1785861550272,
+    "time": 1785861691,
+    "translated": "Hàng ngày"
+  },
+  "Dark": {
+    "name": null,
+    "seq": 1785861550231,
+    "time": 1785861665,
+    "translated": "Bóng tối"
+  },
+  "Default": {
+    "name": null,
+    "seq": 1785861550263,
+    "time": 1785861676,
+    "translated": "Mặc định"
+  },
+  "Defeat any 10 raid bosses!": {
+    "name": null,
+    "seq": 1785861550304,
+    "time": 1785861693,
+    "translated": "Đánh bại 10 trùm Raid bất kỳ!"
+  },
+  "Defeat any 15 raid bosses!": {
+    "name": null,
+    "seq": 1785861550305,
+    "time": 1785861693,
+    "translated": "Đánh bại 15 trùm Raid bất kỳ!"
+  },
+  "Defeat any 5 raid bosses!": {
+    "name": null,
+    "seq": 1785861550303,
+    "time": 1785861693,
+    "translated": "Đánh bại 5 trùm Raid bất kỳ!"
+  },
+  "Defeat one of the raid bosses!": {
+    "name": null,
+    "seq": 1785861550279,
+    "time": 1785861691,
+    "translated": "Đánh bại 1 trùm Raid bất kỳ!"
+  },
+  "Defrecht": {
+    "name": null,
+    "seq": 1785861550075,
+    "time": 1785861610,
+    "translated": "Defrecht"
+  },
+  "Divigems": {
+    "name": null,
+    "seq": 1785861550145,
+    "time": 1785861639,
+    "translated": "Đá thần"
+  },
+  "Doushi": {
+    "name": null,
+    "seq": 1785861550057,
+    "time": 1785861592,
+    "translated": "Doushi"
+  },
+  "Earth": {
+    "name": null,
+    "seq": 1785861550227,
+    "time": 1785861664,
+    "translated": "Đất"
+  },
+  "Episode 1: Battle to Determine the Strongest Sword!": {
+    "name": null,
+    "seq": 1785861550251,
+    "time": 1785861672,
+    "translated": "Tập 1: Trận chiến phân định thanh kiếm mạnh nhất!"
+  },
+  "Episode 1: Formation of Mjolnir  Imperial Guard!": {
+    "name": null,
+    "seq": 1785861550247,
+    "time": 1785861669,
+    "translated": "Tập 1: Thành lập Vệ Binh Hoàng Gia Mjolnir!"
+  },
+  "Episode 1: Phantom Thieves Assemble?!": {
+    "name": null,
+    "seq": 1785861550239,
+    "time": 1785861667,
+    "translated": "Tập 1: Siêu trộm tập hợp?!"
+  },
+  "Episode 1: Power Lost": {
+    "name": null,
+    "seq": 1785861550235,
+    "time": 1785861665,
+    "translated": "Tập 1: Sức mạnh thất lạc"
+  },
+  "Episode 1: Proud and Arrogant, Adamas Returns": {
+    "name": null,
+    "seq": 1785861550255,
+    "time": 1785861673,
+    "translated": "Tập 1: Adamas kiêu hãnh và ngạo mạn tái xuất"
+  },
+  "Episode 1: The Nervous Wolf's Training Diary": {
+    "name": null,
+    "seq": 1785861550243,
+    "time": 1785861668,
+    "translated": "Tập 1: Nhật ký huấn luyện của chú sói bồn chồn"
+  },
+  "Episode 2: A Manly Confrontation": {
+    "name": null,
+    "seq": 1785861550244,
+    "time": 1785861668,
+    "translated": "Tập 2: Cuộc đối đầu chuẩn nam tính"
+  },
+  "Episode 2: Lovely Stuffed Animal": {
+    "name": null,
+    "seq": 1785861550248,
+    "time": 1785861669,
+    "translated": "Tập 2: Thú bông đáng yêu"
+  },
+  "Episode 2: Settlement of the Swords": {
+    "name": null,
+    "seq": 1785861550252,
+    "time": 1785861672,
+    "translated": "Tập 2: Sự phân định giữa các thanh kiếm"
+  },
+  "Episode 2: Tattered Bouquet": {
+    "name": null,
+    "seq": 1785861550256,
+    "time": 1785861673,
+    "translated": "Tập 2: Bó hoa rách tơi tả"
+  },
+  "Episode 2: The Demon Spear and the Black Lion": {
+    "name": null,
+    "seq": 1785861550240,
+    "time": 1785861666,
+    "translated": "Tập 2: Ma thương và Hắc sư"
+  },
+  "Episode 2: The Taste of Memories": {
+    "name": null,
+    "seq": 1785861550236,
+    "time": 1785861665,
+    "translated": "Tập 2: Hương vị ký ức"
+  },
+  "Event": {
+    "name": null,
+    "seq": 1785861550159,
+    "time": 1785861646,
+    "translated": "Sự kiện"
+  },
+  "Evolve a weapon 50 times!": {
+    "name": null,
+    "seq": 1785861550330,
+    "time": 1785861694,
+    "translated": "Tiến hóa vũ khí 50 lần!"
+  },
+  "Excalibur：Raid 1": {
+    "name": null,
+    "seq": 1785861550249,
+    "time": 1785861671,
+    "translated": "Excalibur: Raid 1"
+  },
+  "Excalibur：Raid 2": {
+    "name": null,
+    "seq": 1785861550250,
+    "time": 1785861671,
+    "translated": "Excalibur: Raid 2"
+  },
+  "Exchange": {
+    "name": null,
+    "seq": 1785861550142,
+    "time": 1785861633,
+    "translated": "Cửa hàng đổi"
+  },
+  "Fire": {
+    "name": null,
+    "seq": 1785861550221,
+    "time": 1785861664,
+    "translated": "Lửa"
+  },
+  "Gae Bolg：Raid 1": {
+    "name": null,
+    "seq": 1785861550237,
+    "time": 1785861667,
+    "translated": "Gae Bolg: Raid 1"
+  },
+  "Gae Bolg：Raid 2": {
+    "name": null,
+    "seq": 1785861550238,
+    "time": 1785861667,
+    "translated": "Gae Bolg: Raid 2"
+  },
+  "Get 10 sacreds": {
+    "name": null,
+    "seq": 1785861550450,
+    "time": 1785861695,
+    "translated": "Sở hữu 10 Thánh vật"
+  },
+  "Get 50 soulmates": {
+    "name": null,
+    "seq": 1785861550449,
+    "time": 1785861695,
+    "translated": "Sở hữu 50 Tâm giao"
+  },
+  "Giank": {
+    "name": null,
+    "seq": 1785861550073,
+    "time": 1785861610,
+    "translated": "Giank"
+  },
+  "Gold": {
+    "name": null,
+    "seq": 1785861550146,
+    "time": 1785861638,
+    "translated": "Vàng"
+  },
+  "Gram：Raid 1": {
+    "name": null,
+    "seq": 1785861550241,
+    "time": 1785861668,
+    "translated": "Gram: Raid 1"
+  },
+  "Gram：Raid 2": {
+    "name": null,
+    "seq": 1785861550242,
+    "time": 1785861668,
+    "translated": "Gram: Raid 2"
+  },
+  "HCQ4JXWN": {
+    "name": null,
+    "seq": 1785861550043,
+    "time": 1785861561,
+    "translated": "HCQ4JXWN"
+  },
+  "Item": {
+    "name": null,
+    "seq": 1785861550147,
+    "time": 1785861638,
+    "translated": "Vật phẩm"
+  },
+  "Kerykeion：Raid 1": {
+    "name": null,
+    "seq": 1785861550233,
+    "time": 1785861664,
+    "translated": "Kerykeion: Raid 1"
+  },
+  "Kerykeion：Raid 2": {
+    "name": null,
+    "seq": 1785861550234,
+    "time": 1785861664,
+    "translated": "Kerykeion: Raid 2"
+  },
+  "Light": {
+    "name": null,
+    "seq": 1785861550229,
+    "time": 1785861664,
+    "translated": "Ánh sáng"
+  },
+  "Limit break \"Absolutely Unrivaled Lybel\" 1 time": {
+    "name": null,
+    "seq": 1785861550544,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Tuyệt Đối Vô Song Lybel\" 1 lần"
+  },
+  "Limit break \"Adza\" 1 time": {
+    "name": null,
+    "seq": 1785861550502,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Adza\" 1 lần"
+  },
+  "Limit break \"Ame no Tsuzumi\" 1 time": {
+    "name": null,
+    "seq": 1785861550487,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ame no Tsuzumi\" 1 lần"
+  },
+  "Limit break \"Andrei\" 1 time": {
+    "name": null,
+    "seq": 1785861550467,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Andrei\" 1 lần"
+  },
+  "Limit break \"Angler Joe\" 1 time": {
+    "name": null,
+    "seq": 1785861550490,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Angler Joe\" 1 lần"
+  },
+  "Limit break \"Archimedes\" 1 time": {
+    "name": null,
+    "seq": 1785861550556,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Archimedes\" 1 lần"
+  },
+  "Limit break \"Ares\" 1 time": {
+    "name": null,
+    "seq": 1785861550499,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ares\" 1 lần"
+  },
+  "Limit break \"Artemion\" 4 times": {
+    "name": null,
+    "seq": 1785861550489,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Artemion\" 4 lần"
+  },
+  "Limit break \"Ash\" 1 time": {
+    "name": null,
+    "seq": 1785861550457,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ash\" 1 lần"
+  },
+  "Limit break \"Bavolat\" 1 time": {
+    "name": null,
+    "seq": 1785861550521,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Bavolat\" 1 lần"
+  },
+  "Limit break \"Bewitched By Love Excalibur\" 1 time": {
+    "name": null,
+    "seq": 1785861550496,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Tình Yêu Mê Hoặc Excalibur\" 1 lần"
+  },
+  "Limit break \"Black Cat Calamity Punch! Lothar\" 5 times": {
+    "name": null,
+    "seq": 1785861550555,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Cú Đấm Tai Họa Mèo Đen! Lothar\" 5 lần"
+  },
+  "Limit break \"Boom\" 1 time": {
+    "name": null,
+    "seq": 1785861550500,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Boom\" 1 lần"
+  },
+  "Limit break \"Celebration of Spring Mamoru\" 1 time": {
+    "name": null,
+    "seq": 1785861550560,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Mamoru Trẩy Hội Mùa Xuân\" 1 lần"
+  },
+  "Limit break \"Circe\" 1 time": {
+    "name": null,
+    "seq": 1785861550562,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Circe\" 1 lần"
+  },
+  "Limit break \"Craps\" 3 times": {
+    "name": null,
+    "seq": 1785861550469,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Craps\" 3 lần"
+  },
+  "Limit break \"Dahomeyloa\" 1 time": {
+    "name": null,
+    "seq": 1785861550474,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Dahomeyloa\" 1 lần"
+  },
+  "Limit break \"Dainsleif\" 1 time": {
+    "name": null,
+    "seq": 1785861550522,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Dainsleif\" 1 lần"
+  },
+  "Limit break \"Dazzling Wings Schmiel\" 1 time": {
+    "name": null,
+    "seq": 1785861550551,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Đôi Cánh Rực Rỡ Schmiel\" 1 lần"
+  },
+  "Limit break \"Dex\" 1 time": {
+    "name": null,
+    "seq": 1785861550473,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Dex\" 1 lần"
+  },
+  "Limit break \"Dragoro\" 1 time": {
+    "name": null,
+    "seq": 1785861550536,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Dragoro\" 1 lần"
+  },
+  "Limit break \"Ennick\" 1 time": {
+    "name": null,
+    "seq": 1785861550481,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ennick\" 1 lần"
+  },
+  "Limit break \"Festival Man Seldore\" 1 time": {
+    "name": null,
+    "seq": 1785861550485,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Chàng Trai Lễ Hội Seldore\" 1 lần"
+  },
+  "Limit break \"Fielmar\" 3 times": {
+    "name": null,
+    "seq": 1785861550508,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Fielmar\" 3 lần"
+  },
+  "Limit break \"Flames of Madness Tagmard\" 1 time": {
+    "name": null,
+    "seq": 1785861550524,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Ngọn Lửa Cuồng Sạn Tagmard\" 1 lần"
+  },
+  "Limit break \"Flaming Spirit Bullet Frey\" 1 time": {
+    "name": null,
+    "seq": 1785861550539,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Đạn Linh Hồn Lửa Frey\" 1 lần"
+  },
+  "Limit break \"Fragarach\" 1 time": {
+    "name": null,
+    "seq": 1785861550483,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Fragarach\" 1 lần"
+  },
+  "Limit break \"Freikugel\" 1 time": {
+    "name": null,
+    "seq": 1785861550546,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Freikugel\" 1 lần"
+  },
+  "Limit break \"Fuyou\" 1 time": {
+    "name": null,
+    "seq": 1785861550507,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Fuyou\" 1 lần"
+  },
+  "Limit break \"Gadaichi\" 3 times": {
+    "name": null,
+    "seq": 1785861550527,
+    "time": 1785861698,
+    "translated": "Thức tỉnh \"Gadaichi\" 3 lần"
+  },
+  "Limit break \"Genius Confectioner Jeron\" 4 times": {
+    "name": null,
+    "seq": 1785861550541,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Thợ Bánh Thiên Tài Jeron\" 4 lần"
+  },
+  "Limit break \"Genpei\" 3 times": {
+    "name": null,
+    "seq": 1785861550514,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Genpei\" 3 lần"
+  },
+  "Limit break \"Geoffcielo\" 1 time": {
+    "name": null,
+    "seq": 1785861550537,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Geoffcielo\" 1 lần"
+  },
+  "Limit break \"Ginjimaru\" 1 time": {
+    "name": null,
+    "seq": 1785861550506,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ginjimaru\" 1 lần"
+  },
+  "Limit break \"God of the Harvest Thyrsus\" 1 time": {
+    "name": null,
+    "seq": 1785861550535,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Thần Mùa Màng Thyrsus\" 1 lần"
+  },
+  "Limit break \"Gorud\" 1 time": {
+    "name": null,
+    "seq": 1785861550505,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Gorud\" 1 lần"
+  },
+  "Limit break \"Gridarvol\" 1 time": {
+    "name": null,
+    "seq": 1785861550504,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Gridarvol\" 1 lần"
+  },
+  "Limit break \"Guandao\" 1 time": {
+    "name": null,
+    "seq": 1785861550492,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Guandao\" 1 lần"
+  },
+  "Limit break \"Gyges\" 1 time": {
+    "name": null,
+    "seq": 1785861550531,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Gyges\" 1 lần"
+  },
+  "Limit break \"Haekingr\" 1 time": {
+    "name": null,
+    "seq": 1785861550475,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Haekingr\" 1 lần"
+  },
+  "Limit break \"High Spirits Guardion\" 1 time": {
+    "name": null,
+    "seq": 1785861550525,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"High Spirits Guardion\" 1 lần"
+  },
+  "Limit break \"Holy Night Sincerity Mageiro\" 1 time": {
+    "name": null,
+    "seq": 1785861550548,
+    "time": 1785861698,
+    "translated": "Thức tỉnh \"Đêm Thánh Chân Thành Mageiro\" 1 lần"
+  },
+  "Limit break \"Horus\" 1 time": {
+    "name": null,
+    "seq": 1785861550501,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Horus\" 1 lần"
+  },
+  "Limit break \"Illusive Blue Tiger Jinn\" 1 time": {
+    "name": null,
+    "seq": 1785861550543,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Lam Hổ Ảo Ảnh Jinn\" 1 lần"
+  },
+  "Limit break \"Jakris\" 1 time": {
+    "name": null,
+    "seq": 1785861550461,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Jakris\" 1 lần"
+  },
+  "Limit break \"Jinn\" 1 time": {
+    "name": null,
+    "seq": 1785861550471,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Jinn\" 1 lần"
+  },
+  "Limit break \"Joukahainen\" 1 time": {
+    "name": null,
+    "seq": 1785861550530,
+    "time": 1785861698,
+    "translated": "Thức tỉnh \"Joukahainen\" 1 lần"
+  },
+  "Limit break \"Kabutafel\" 1 time": {
+    "name": null,
+    "seq": 1785861550458,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Kabutafel\" 1 lần"
+  },
+  "Limit break \"Keel\" 1 time": {
+    "name": null,
+    "seq": 1785861550495,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Keel\" 1 lần"
+  },
+  "Limit break \"Keravish\" 4 times": {
+    "name": null,
+    "seq": 1785861550479,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Keravish\" 4 lần"
+  },
+  "Limit break \"Kotaro\" 1 time": {
+    "name": null,
+    "seq": 1785861550472,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Kotaro\" 1 lần"
+  },
+  "Limit break \"Lahat\" 1 time": {
+    "name": null,
+    "seq": 1785861550553,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Lahat\" 1 lần"
+  },
+  "Limit break \"Lionel\" 1 time": {
+    "name": null,
+    "seq": 1785861550491,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Lionel\" 1 lần"
+  },
+  "Limit break \"Lothar\" 1 time": {
+    "name": null,
+    "seq": 1785861550488,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Lothar\" 1 lần"
+  },
+  "Limit break \"Lucion\" 1 time": {
+    "name": null,
+    "seq": 1785861550498,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Lucion\" 1 lần"
+  },
+  "Limit break \"Lucky Snake Dance Wolf Hakuma\" 1 time": {
+    "name": null,
+    "seq": 1785861550558,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Vũ Điệu Mãng Xà May Mắn Hakuma\" 1 lần"
+  },
+  "Limit break \"Maltet\" 1 time": {
+    "name": null,
+    "seq": 1785861550528,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Maltet\" 1 lần"
+  },
+  "Limit break \"Mannitol\" 1 time": {
+    "name": null,
+    "seq": 1785861550519,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Mannitol\" 1 lần"
+  },
+  "Limit break \"Mikazuki-Munechika\" 1 time": {
+    "name": null,
+    "seq": 1785861550523,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Mikazuki-Munechika\" 1 lần"
+  },
+  "Limit break \"Mistilteinn\" 1 time": {
+    "name": null,
+    "seq": 1785861550515,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Mistilteinn\" 1 lần"
+  },
+  "Limit break \"Mizzivel\" 1 time": {
+    "name": null,
+    "seq": 1785861550547,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Mizzivel\" 1 lần"
+  },
+  "Limit break \"Muramasa\" 1 time": {
+    "name": null,
+    "seq": 1785861550540,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Muramasa\" 1 lần"
+  },
+  "Limit break \"Muyou\" 1 time": {
+    "name": null,
+    "seq": 1785861550559,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Muyou\" 1 lần"
+  },
+  "Limit break \"Nichouhanpu\" 1 time": {
+    "name": null,
+    "seq": 1785861550465,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Nichouhanpu\" 1 lần"
+  },
+  "Limit break \"Nithhaiah and Glashala\" 1 time": {
+    "name": null,
+    "seq": 1785861550532,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Nithhaiah và Glashala\" 1 lần"
+  },
+  "Limit break \"Njord\" 1 time": {
+    "name": null,
+    "seq": 1785861550478,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Njord\" 1 lần"
+  },
+  "Limit break \"Odenta-Mitsuyo\" 1 time": {
+    "name": null,
+    "seq": 1785861550557,
+    "time": 1785861698,
+    "translated": "Thức tỉnh \"Odenta-Mitsuyo\" 1 lần"
+  },
+  "Limit break \"Oshe\" 1 time": {
+    "name": null,
+    "seq": 1785861550545,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Oshe\" 1 lần"
+  },
+  "Limit break \"Phil\" 3 times": {
+    "name": null,
+    "seq": 1785861550462,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Phil\" 3 lần"
+  },
+  "Limit break \"Ra\" 1 time": {
+    "name": null,
+    "seq": 1785861550468,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ra\" 1 lần"
+  },
+  "Limit break \"Radauros\" 1 time": {
+    "name": null,
+    "seq": 1785861550459,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Radauros\" 1 lần"
+  },
+  "Limit break \"Raging Bull Demon Ares\" 1 time": {
+    "name": null,
+    "seq": 1785861550526,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Bò Ma Nổi Giận Ares\" 1 lần"
+  },
+  "Limit break \"Raging Wolf Gram\" 1 time": {
+    "name": null,
+    "seq": 1785861550513,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Sói Cuồng Nộ Gram\" 1 lần"
+  },
+  "Limit break \"Rahl\" 3 times": {
+    "name": null,
+    "seq": 1785861550482,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Rahl\" 3 lần"
+  },
+  "Limit break \"Rathma\" 1 time": {
+    "name": null,
+    "seq": 1785861550529,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Rathma\" 1 lần"
+  },
+  "Limit break \"Razwaltz\" 1 time": {
+    "name": null,
+    "seq": 1785861550534,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Razwaltz\" 1 lần"
+  },
+  "Limit break \"Red-Eyed Lover Bonsho\" 1 time": {
+    "name": null,
+    "seq": 1785861550550,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Người Tình Mắt Đỏ Bonsho\" 1 lần"
+  },
+  "Limit break \"Roaring Sea Survivor Hakuma\" 5 times": {
+    "name": null,
+    "seq": 1785861550476,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Kẻ Sống Sót Biển Cuồng Nộ Hakuma\" 5 lần"
+  },
+  "Limit break \"Romulus\" 1 time": {
+    "name": null,
+    "seq": 1785861550480,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Romulus\" 1 lần"
+  },
+  "Limit break \"Russell\" 3 times": {
+    "name": null,
+    "seq": 1785861550463,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Russell\" 3 lần"
+  },
+  "Limit break \"Sandstone Thief Gary\" 1 time": {
+    "name": null,
+    "seq": 1785861550561,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Tên Trộm Sa Thạch Gary\" 1 lần"
+  },
+  "Limit break \"Sea Breeze Wave Riding Chuck\" 1 time": {
+    "name": null,
+    "seq": 1785861550477,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Chuck Lướt Sóng Gió Biển\" 1 lần"
+  },
+  "Limit break \"Shinkun\" 1 time": {
+    "name": null,
+    "seq": 1785861550464,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Shinkun\" 1 lần"
+  },
+  "Limit break \"Squtho\" 1 time": {
+    "name": null,
+    "seq": 1785861550552,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Squtho\" 1 lần"
+  },
+  "Limit break \"Streetwear Demon Hunter Russell\" 1 time": {
+    "name": null,
+    "seq": 1785861550554,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Thợ Săn Quỷ Đường Phố Russell\" 1 lần"
+  },
+  "Limit break \"Summer Evening Schmiel\" 3 times": {
+    "name": null,
+    "seq": 1785861550486,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Đêm Hè Schmiel\" 3 lần"
+  },
+  "Limit break \"Svalinn\" 1 time": {
+    "name": null,
+    "seq": 1785861550493,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Svalinn\" 1 lần"
+  },
+  "Limit break \"Tagmard\" 1 time": {
+    "name": null,
+    "seq": 1785861550497,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Tagmard\" 1 lần"
+  },
+  "Limit break \"Tastro\" 1 time": {
+    "name": null,
+    "seq": 1785861550549,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Tastro\" 1 lần"
+  },
+  "Limit break \"Tesoro\" 1 time": {
+    "name": null,
+    "seq": 1785861550466,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Tesoro\" 1 lần"
+  },
+  "Limit break \"Tresmagnique\" 1 time": {
+    "name": null,
+    "seq": 1785861550542,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Tresmagnique\" 1 lần"
+  },
+  "Limit break \"Ukonvasara\" 1 time": {
+    "name": null,
+    "seq": 1785861550503,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Ukonvasara\" 1 lần"
+  },
+  "Limit break \"Vanghul\" 1 time": {
+    "name": null,
+    "seq": 1785861550538,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Vanghul\" 1 lần"
+  },
+  "Limit break \"Vaskhaan\" 1 time": {
+    "name": null,
+    "seq": 1785861550494,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Vaskhaan\" 1 lần"
+  },
+  "Limit break \"Vel\" 1 time": {
+    "name": null,
+    "seq": 1785861550563,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Vel\" 1 lần"
+  },
+  "Limit break \"Vidandell\" 1 time": {
+    "name": null,
+    "seq": 1785861550520,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Vidandell\" 1 lần"
+  },
+  "Limit break \"Wheel\" 1 time": {
+    "name": null,
+    "seq": 1785861550470,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Wheel\" 1 lần"
+  },
+  "Limit break \"Wiesn\" 1 time": {
+    "name": null,
+    "seq": 1785861550533,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Wiesn\" 1 lần"
+  },
+  "Limit break \"Wolakite\" 1 time": {
+    "name": null,
+    "seq": 1785861550518,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Wolakite\" 1 lần"
+  },
+  "Limit break \"Wrenvul\" 1 time": {
+    "name": null,
+    "seq": 1785861550517,
+    "time": 1785861697,
+    "translated": "Thức tỉnh \"Wrenvul\" 1 lần"
+  },
+  "Limit break \"Yatsukamizu\" 1 time": {
+    "name": null,
+    "seq": 1785861550484,
+    "time": 1785861696,
+    "translated": "Thức tỉnh \"Yatsukamizu\" 1 lần"
+  },
+  "Limit break a weapon 100 times!": {
+    "name": null,
+    "seq": 1785861550329,
+    "time": 1785861694,
+    "translated": "Thức tỉnh vũ khí 100 lần!"
+  },
+  "Log in 2 times!": {
+    "name": null,
+    "seq": 1785861550307,
+    "time": 1785861693,
+    "translated": "Đăng nhập 2 lần!"
+  },
+  "Log in 3 times!": {
+    "name": null,
+    "seq": 1785861550295,
+    "time": 1785861693,
+    "translated": "Đăng nhập 3 lần!"
+  },
+  "Log in 4 times!": {
+    "name": null,
+    "seq": 1785861550296,
+    "time": 1785861694,
+    "translated": "Đăng nhập 4 lần!"
+  },
+  "Log in!": {
+    "name": null,
+    "seq": 1785861550282,
+    "time": 1785861691,
+    "translated": "Đăng nhập!"
+  },
+  "Main": {
+    "name": null,
+    "seq": 1785861550157,
+    "time": 1785861646,
+    "translated": "Chính"
+  },
+  "Medal 1": {
+    "name": null,
+    "seq": 1785861550431,
+    "time": 1785861695,
+    "translated": "Huy chương 1"
+  },
+  "Medal 2": {
+    "name": null,
+    "seq": 1785861550433,
+    "time": 1785861695,
+    "translated": "Huy chương 2"
+  },
+  "Medal 3": {
+    "name": null,
+    "seq": 1785861550435,
+    "time": 1785861695,
+    "translated": "Huy chương 3"
+  },
+  "Medal 4": {
+    "name": null,
+    "seq": 1785861550451,
+    "time": 1785861696,
+    "translated": "Huy chương 4"
+  },
+  "Medal 5": {
+    "name": null,
+    "seq": 1785861550453,
+    "time": 1785861696,
+    "translated": "Huy chương 5"
+  },
+  "Medal 6": {
+    "name": null,
+    "seq": 1785861550455,
+    "time": 1785861696,
+    "translated": "Huy chương 6"
+  },
+  "Medal 7": {
+    "name": null,
+    "seq": 1785861550509,
+    "time": 1785861697,
+    "translated": "Huy chương 7"
+  },
+  "Medal 8": {
+    "name": null,
+    "seq": 1785861550511,
+    "time": 1785861697,
+    "translated": "Huy chương 8"
+  },
+  "Mercator": {
+    "name": null,
+    "seq": 1785861550071,
+    "time": 1785861610,
+    "translated": "Mercator"
+  },
+  "Mjolnir：Raid 1": {
+    "name": null,
+    "seq": 1785861550245,
+    "time": 1785861669,
+    "translated": "Mjolnir: Raid 1"
+  },
+  "Mjolnir：Raid 2": {
+    "name": null,
+    "seq": 1785861550246,
+    "time": 1785861669,
+    "translated": "Mjolnir: Raid 2"
+  },
+  "Music will be played in this game.\nPlease be aware of your surroundings when playing.\n\nAlso, we recommend that you play using Wi-Fi\nbecause of frequent communication.\n\nAll characters in this game are\n18 years of age or older.": {
+    "name": null,
+    "seq": 1785861550041,
+    "time": 1785861559,
+    "translated": "Trò chơi có sử dụng âm thanh.\nVui lòng chú ý đến môi trường xung quanh khi trải nghiệm.\n\nNgoài ra, khuyến khích sử dụng kết nối Wi-Fi\ndo game truyền tải dữ liệu thường xuyên.\n\nTất cả nhân vật trong trò chơi đều\ntừ 18 tuổi trở lên."
+  },
+  "Nice to meet you.": {
+    "name": null,
+    "seq": 1785861550058,
+    "time": 1785861592,
+    "translated": "Rất vui được gặp bạn."
+  },
+  "No time limit.": {
+    "name": null,
+    "seq": 1785861550281,
+    "time": 1785861691,
+    "translated": "Không giới hạn thời gian."
+  },
+  "Normal": {
+    "name": null,
+    "seq": 1785861550276,
+    "time": 1785861691,
+    "translated": "Thường"
+  },
+  "Number of battles achieved: 2000": {
+    "name": null,
+    "seq": 1785861550437,
+    "time": 1785861695,
+    "translated": "Số trận chiến đã tham gia: 2000"
+  },
+  "OK": {
+    "name": null,
+    "seq": 1785861550040,
+    "time": 1785861559,
+    "translated": "Đồng ý"
+  },
+  "Part 1 (A)": {
+    "name": null,
+    "seq": 1785861550172,
+    "time": 1785861648,
+    "translated": "Phần 1 (A)"
+  },
+  "Part 1 (B)": {
+    "name": null,
+    "seq": 1785861550174,
+    "time": 1785861648,
+    "translated": "Phần 1 (B)"
+  },
+  "Part 1.5": {
+    "name": null,
+    "seq": 1785861550176,
+    "time": 1785861648,
+    "translated": "Phần 1.5"
+  },
+  "Participate in raid battle relief 10 times!": {
+    "name": null,
+    "seq": 1785861550438,
+    "time": 1785861695,
+    "translated": "Tham gia viện trợ Raid 10 lần!"
+  },
+  "Party 2": {
+    "name": null,
+    "seq": 1785861550059,
+    "time": 1785861592,
+    "translated": "Đội hình 2"
+  },
+  "Pass the arena 1 time": {
+    "name": null,
+    "seq": 1785861550447,
+    "time": 1785861695,
+    "translated": "Tham gia Đấu trường 1 lần"
+  },
+  "Pass the arena 10 times": {
+    "name": null,
+    "seq": 1785861550441,
+    "time": 1785861695,
+    "translated": "Tham gia Đấu trường 10 lần"
+  },
+  "Pass the arena 15 times": {
+    "name": null,
+    "seq": 1785861550442,
+    "time": 1785861695,
+    "translated": "Tham gia Đấu trường 15 lần"
+  },
+  "Pass the arena 20 times": {
+    "name": null,
+    "seq": 1785861550444,
+    "time": 1785861695,
+    "translated": "Tham gia Đấu trường 20 lần"
+  },
+  "Pass the arena 5 times": {
+    "name": null,
+    "seq": 1785861550448,
+    "time": 1785861695,
+    "translated": "Tham gia Đấu trường 5 lần"
+  },
+  "Play any of the quests 5 times!": {
+    "name": null,
+    "seq": 1785861550283,
+    "time": 1785861691,
+    "translated": "Vượt ải bất kỳ 5 lần!"
+  },
+  "Power": {
+    "name": null,
+    "seq": 1785861550076,
+    "time": 1785861616,
+    "translated": "Lực chiến"
+  },
+  "Power 1013": {
+    "name": null,
+    "seq": 1785861550139,
+    "time": 1785861619,
+    "translated": "Lực chiến 1013"
+  },
+  "Power 10140": {
+    "name": null,
+    "seq": 1785861550082,
+    "time": 1785861616,
+    "translated": "Lực chiến 10140"
+  },
+  "Power 10799": {
+    "name": null,
+    "seq": 1785861550107,
+    "time": 1785861619,
+    "translated": "Lực chiến 10799"
+  },
+  "Power 10968": {
+    "name": null,
+    "seq": 1785861550081,
+    "time": 1785861616,
+    "translated": "Lực chiến 10968"
+  },
+  "Power 10997": {
+    "name": null,
+    "seq": 1785861550080,
+    "time": 1785861616,
+    "translated": "Lực chiến 10997"
+  },
+  "Power 11010": {
+    "name": null,
+    "seq": 1785861550079,
+    "time": 1785861616,
+    "translated": "Lực chiến 11010"
+  },
+  "Power 1": {
+    "name": null,
+    "seq": 1785861550078,
+    "time": 1785861616,
+    "translated": "Lực chiến 1"
+  }
+}

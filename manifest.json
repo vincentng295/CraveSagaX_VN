@@ -3,6 +3,9 @@
   "name": "Crave Saga X Tiếng Việt",
   "version": "1.2",
   "description": "Tự dịch hội thoại game Crave Saga X sang Tiếng Việt",
+  "background": {
+    "service_worker": "background.js"
+  },
   "icons": {
     "16": "crave-saga.png",
     "32": "crave-saga.png",

@@ -101,12 +101,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Load dữ liệu từ chrome.storage.local
-    function loadDictionary() {
-        chrome.storage.local.get({ translationDict: {} }, (result) => {
-            translationDict = result.translationDict;
+    async function loadDictionary() {
+        chrome.storage.local.get({ translationDict: {} }, async (result) => {
+            translationDict = result.translationDict || {};
+
+            // Nếu từ điển đang trống -> Tự động nạp pretranslated.json
+            if (Object.keys(translationDict).length === 0) {
+                try {
+                    const response = await fetch(chrome.runtime.getURL('pretranslated.json'));
+                    translationDict = await response.json();
+                    saveDictionary(); // Lưu lại vào storage
+                } catch (err) {
+                    console.warn("Không tìm thấy hoặc không thể đọc file pretranslated.json", err);
+                }
+            }
+
             const changed = migrateMissingTimes();
             if (changed) {
-                saveDictionary(); // lưu lại ngay các time vừa được ép
+                saveDictionary();
             }
             renderTable();
         });
