@@ -110,12 +110,8 @@ window.addEventListener('message', (event) => {
         proto.__originalDescriptor = originalDescriptor;
         const originalSet = originalDescriptor.set;
         const debounceMap = new WeakMap();
+        const translationCache = new Map();
 
-        // Text đi vào đây LÀ ĐÃ ĐƯỢC DỊCH SẴN rồi (dịch ở tầng chặn XHR, trước
-        // khi Cocos đọc file kịch bản). Hàm này chỉ còn nhiệm vụ hiển thị:
-        // lọc ra dòng thoại thật (bỏ số, timer...) để quyết định có cần
-        // ghi đè font + ngắt dòng lại hay không.
-        /*
         function isDialogueText(text) {
             const trimmed = text.trim();
             if (/^\d+$/.test(trimmed)) return false;
@@ -123,7 +119,22 @@ window.addEventListener('message', (event) => {
             if (!/[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF]/.test(trimmed)) return false;
             return true;
         }
-            */
+
+        async function translateText(text) {
+            if (!window.is_translated) return text;
+            if (!text || !text.trim()) return text;
+            if (translationCache.has(text)) return translationCache.get(text);
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(text)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                let translated = data[0].map(item => item[0]).join('');
+                translationCache.set(text, translated);
+                return translated;
+            } catch (e) {
+                return null;
+            }
+        }
 
         function fixCocosFont(label) {
             try {
@@ -147,45 +158,11 @@ window.addEventListener('message', (event) => {
             } catch (err) {}
         }
 
-        // Ghi đè font + ngắt dòng lại rồi render lại cho 1 label, dùng thẳng
-        // `text` truyền vào (đã là bản dịch sẵn, không tự dịch gì ở đây nữa).
-        function fixAndRewrap(labelInstance, text) {
-            fixCocosFont(labelInstance);
-
-            // PASS A: bật wrap engine gốc và gán text để Cocos tự đo chữ —
-            // hook measureText ở trên sẽ "chụp" lại context + font thật
-            // mà nó vừa dùng. (Có thể hiện sai 1 frame, không đáng kể.)
-            labelInstance.enableWrapText = true;
-            if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = true;
-            originalSet.call(labelInstance, text);
-
-            if (!lastMeasureCtx || !lastMeasureFont) {
-                // Không bắt được context đo (build không dùng canvas 2D để đo
-                // system font) — đành để engine tự wrap như cũ.
-                if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
-                if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
-                return;
-            }
-
-            // PASS B: tự ngắt dòng bằng đúng context/font vừa chụp được,
-            // rồi tắt wrap tự động của engine và gán text đã có \n sẵn.
-            const safetyMargin = 8; // chừa lề nhỏ tránh dính viền
-            const maxWidth = (labelInstance.node ? labelInstance.node.width : 650) - safetyMargin;
-            const wrapped = wrapWithEngineMetrics(lastMeasureCtx, lastMeasureFont, text, maxWidth);
-
-            labelInstance.enableWrapText = false;
-            if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = false;
-            originalSet.call(labelInstance, wrapped);
-
-            if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
-            if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
-        }
-
         Object.defineProperty(proto, 'string', {
             set: function (val) {
                 originalSet.call(this, val);
 
-                if (!val || typeof val !== 'string') return;
+                if (!window.is_translated || !val || typeof val !== 'string' || !isDialogueText(val)) return;
 
                 if (debounceMap.has(this)) {
                     clearTimeout(debounceMap.get(this));
@@ -193,15 +170,46 @@ window.addEventListener('message', (event) => {
 
                 const labelInstance = this;
 
-                debounceMap.set(this, setTimeout(() => {
-                    fixAndRewrap(labelInstance, val);
+                debounceMap.set(this, setTimeout(async () => {
+                    let translatedText = await translateText(val);
+                    if (!translatedText || !window.is_translated) return;
+
+                    fixCocosFont(labelInstance);
+
+                    // PASS A: bật wrap engine gốc và gán text để Cocos tự đo chữ —
+                    // hook measureText ở trên sẽ "chụp" lại context + font thật
+                    // mà nó vừa dùng. (Có thể hiện sai 1 frame, không đáng kể.)
+                    labelInstance.enableWrapText = true;
+                    if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = true;
+                    originalSet.call(labelInstance, translatedText);
+
+                    if (!lastMeasureCtx || !lastMeasureFont) {
+                        // Không bắt được context đo (build không dùng canvas 2D để đo
+                        // system font) — đành để engine tự wrap như cũ.
+                        if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
+                        if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
+                        return;
+                    }
+
+                    // PASS B: tự ngắt dòng bằng đúng context/font vừa chụp được,
+                    // rồi tắt wrap tự động của engine và gán text đã có \n sẵn.
+                    const safetyMargin = 8; // chừa lề nhỏ tránh dính viền
+                    const maxWidth = (labelInstance.node ? labelInstance.node.width : 650) - safetyMargin;
+                    const wrapped = wrapWithEngineMetrics(lastMeasureCtx, lastMeasureFont, translatedText, maxWidth);
+
+                    labelInstance.enableWrapText = false;
+                    if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = false;
+                    originalSet.call(labelInstance, wrapped);
+
+                    if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
+                    if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
                 }, 150));
             },
             get: originalDescriptor.get,
             configurable: true
         });
 
-        console.log("-> [AutoTranslate]: Hook Cocos2d successfully! (font-fix + rewrap only, dịch đã xử lý ở tầng XHR)");
+        console.log("-> [AutoTranslate]: Hook Cocos2d successfully!");
     }
 
     initCocosHook();
