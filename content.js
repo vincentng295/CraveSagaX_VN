@@ -10,60 +10,93 @@ chrome.runtime.onMessage.addListener((message) => {
     }
 });
 
-// Gửi Dictionary ban đầu vào main world
+// --- QUẢN LÝ TỪ ĐIỂN TRONG BỘ NHỚ RAM ĐỂ TRÁNH RACE CONDITION ---
+let localDictCache = {};
+let isDictLoaded = false;
+let pendingQueue = [];
+let saveTimeout = null;
+
+// Gửi Dictionary hiện tại trong memory vào main world cho injected.js
 function syncDictToInjected() {
+    window.postMessage({ type: 'GAME_DICT_UPDATE', dict: localDictCache }, '*');
+}
+
+// Khởi tạo và tải Dictionary từ Storage lên Memory 1 lần duy nhất
+function initDictCache() {
     chrome.storage.local.get({ translationDict: {} }, (result) => {
-        window.postMessage({ type: 'GAME_DICT_UPDATE', dict: result.translationDict }, '*');
+        localDictCache = result.translationDict || {};
+        isDictLoaded = true;
+
+        // Xử lý các câu thoại gửi đến trong lúc chờ Storage load xong
+        if (pendingQueue.length > 0) {
+            pendingQueue.forEach(item => processSingleTranslation(item));
+            pendingQueue = [];
+            scheduleSaveToStorage();
+        } else {
+            syncDictToInjected();
+        }
     });
 }
 
-syncDictToInjected();
+// Cập nhật 1 câu thoại vào bộ nhớ RAM
+function processSingleTranslation(data) {
+    const { original, translated, speaker, seq } = data;
+    if (!original) return;
+
+    const existingEntry = localDictCache[original];
+
+    // Trường hợp 1: Chưa có trong dict -> Lưu mới
+    if (!existingEntry) {
+        localDictCache[original] = {
+            translated: translated || '',
+            name: speaker || null,
+            time: Math.floor(Date.now() / 1000),
+            ...(typeof seq === 'number' ? { seq } : {})
+        };
+        return;
+    }
+
+    // Trường hợp 2: Đã tồn tại nhưng bản dịch cũ bị trống ("") và lần này dịch thành công
+    const oldTranslated = typeof existingEntry === 'string' ? existingEntry : existingEntry.translated;
+    if ((!oldTranslated || !oldTranslated.trim()) && translated && translated.trim()) {
+        if (typeof existingEntry === 'string') {
+            localDictCache[original] = {
+                translated: translated,
+                name: speaker || null,
+                time: Math.floor(Date.now() / 1000),
+                ...(typeof seq === 'number' ? { seq } : {})
+            };
+        } else {
+            localDictCache[original] = {
+                ...existingEntry,
+                translated: translated,
+                name: existingEntry.name || speaker || null 
+            };
+        }
+    }
+}
+
+// Gom nhiều lần cập nhật liên tiếp để ghi xuống chrome.storage.local một lần
+function scheduleSaveToStorage() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        chrome.storage.local.set({ translationDict: localDictCache }, () => {
+            syncDictToInjected();
+        });
+    }, 300); // Đợi 300ms sau câu thoại cuối cùng rồi mới ghi ổ đĩa
+}
+
+// Bắt đầu load cache
+initDictCache();
 
 // Lắng nghe lệnh lưu câu dịch mới từ injected.js
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SAVE_NEW_TRANSLATION') {
-        const { original, translated, speaker, seq } = event.data;
-        chrome.storage.local.get({ translationDict: {} }, (result) => {
-            const dict = result.translationDict;
-            const existingEntry = dict[original];
-
-            // 1. Nếu chưa có câu thoại này trong dict -> Lưu mới
-            if (!existingEntry) {
-                dict[original] = {
-                    translated: translated || '',
-                    name: speaker || null,
-                    time: Math.floor(Date.now() / 1000),
-                    ...(typeof seq === 'number' ? { seq } : {})
-                };
-                chrome.storage.local.set({ translationDict: dict }, () => {
-                    syncDictToInjected();
-                });
-                return;
-            }
-
-            // 2. Nếu đã tồn tại nhưng trước đó bị trống ("") và lần này có bản dịch thành công
-            // -> Cập nhật bản dịch mới, GIỮ NGUYÊN time và seq cũ
-            const oldTranslated = typeof existingEntry === 'string' ? existingEntry : existingEntry.translated;
-            if ((!oldTranslated || !oldTranslated.trim()) && translated && translated.trim()) {
-                if (typeof existingEntry === 'string') {
-                    dict[original] = {
-                        translated: translated,
-                        name: speaker || null,
-                        time: Math.floor(Date.now() / 1000),
-                        ...(typeof seq === 'number' ? { seq } : {})
-                    };
-                } else {
-                    dict[original] = {
-                        ...existingEntry,
-                        translated: translated,
-                        // Nếu câu cũ chưa có name thì bổ sung name mới
-                        name: existingEntry.name || speaker || null 
-                    };
-                }
-                chrome.storage.local.set({ translationDict: dict }, () => {
-                    syncDictToInjected();
-                });
-            }
-        });
+        if (!isDictLoaded) {
+            pendingQueue.push(event.data);
+        } else {
+            processSingleTranslation(event.data);
+            scheduleSaveToStorage();
+        }
     }
 });
