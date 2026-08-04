@@ -4,6 +4,31 @@ Extension tự động việt hóa và tối ưu hiển thị cho webgame (Crave
 
 <img alt="demo" src="https://github.com/user-attachments/assets/a9b8e1a9-3eea-42e0-bd67-ae69678a0d54" />
 
+---
+
+## 💖 Lý do ra đời
+
+Dự án này được mình (**HuskyDG**) phát triển xuất phát từ **tình yêu đối với cốt truyện và cộng đồng game Crave Saga X**. Nhận thấy nhiều anh em người chơi Việt Nam gặp rào cản về ngôn ngữ (tiếng Anh / tiếng Nhật) làm giảm trải nghiệm thưởng thức lore game, mình làm tiện ích này để giúp mọi người tiếp cận nội dung game dễ dàng và trọn vẹn hơn.
+
+---
+
+## 🔓 Tính minh bạch & Mã nguồn mở
+
+- **Hoàn toàn miễn phí & Phi lợi nhuận:** Dự án được phát triển vì cộng đồng, cam kết **không thu bất kỳ khoản phí nào** và **không thương mại hóa**.
+- **Mã nguồn mở (Open Source):** Toàn bộ code của extension được mình mở công khai trên GitHub để anh em thoải mái kiểm tra, học hỏi hoặc cùng đóng góp phát triển.
+
+---
+
+## ⚠️ CẢNH BÁO AN TOÀN
+
+> **LƯU Ý QUAN TRỌNG VỀ BẢO MẬT TÀI KHOẢN:**
+> 
+> Không sử dụng extension từ nguồn gốc không rõ nhằm tránh bị **đánh cắp thông tin đăng nhập, token session hoặc tài khoản game** của người dùng.
+> 
+> **Lời khuyên an toàn từ HuskyDG:**
+> 1. **Chỉ tải tiện ích từ Repositories/Releases chính thức** tại GitHub này.
+> 2. **Tuyệt đối KHÔNG sử dụng** các file `.crx`, `.zip` hoặc bản mod được phát tán qua các đường link trôi nổi, không rõ nguồn gốc.
+> 3. Anh em biết về lập trình có thể thoải mái soi code trực tiếp ngay tại repo này để yên tâm sử dụng.
 
 ---
 
@@ -43,3 +68,18 @@ Do các trình duyệt di động thông thường không hỗ trợ cài tiện
 
 - Nutaku: <https://www.nutaku.net/games/crave-saga-x/play>
 - Erolabs: <https://www.ero-labs.com/en/cloud_game.html?id=47&connect_type=1&connection_id=30>
+
+---
+
+## ☕ Ủng hộ dự án (Donation)
+
+Extension hoàn toàn miễn phí, nhưng nếu bạn yêu thích công cụ này và muốn gửi chút "café" động viên mình tiếp tục duy trì, cập nhật tính năng mới thì có thể ủng hộ qua cổng VietQR bên dưới:
+
+<img src="https://img.vietqr.io/image/BIDV-060203003174-compact2.png?amount=0&addInfo=CraveSagaX%20VN%20Donation&accountName=NGUYEN%20HOANG%20THE%20VI" alt="Mã QR Donation" width="300"/>
+
+**Ngân hàng:** BIDV  
+**Số tài khoản:** `060203003174`  
+**Chủ tài khoản:** `NGUYEN HOANG THE VI`  
+**Nội dung:** `CraveSagaX VN Donation`
+
+> *Mọi đóng góp của anh em đều là nguồn động lực rất lớn đối với mình. Cảm ơn mọi người nhiều!* ❤️
