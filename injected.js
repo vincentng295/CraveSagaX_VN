@@ -195,6 +195,7 @@ window.addEventListener('message', (event) => {
             try {
                 const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
                 const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP error ${res.status}`);
                 const data = await res.json();
                 let translated = data[0].map(item => item[0]).join('');
 
@@ -211,6 +212,13 @@ window.addEventListener('message', (event) => {
 
                 return translated;
             } catch (e) {
+                // Dịch thất bại: Lưu value trống ""
+                window.postMessage({
+                    type: 'SAVE_NEW_TRANSLATION',
+                    original: cleanText,
+                    translated: '',
+                    seq
+                }, '*');
                 return null;
             }
         }
@@ -370,10 +378,10 @@ window.addEventListener('message', (event) => {
         const seq = nextTranslationSeq();
         const cleanText = text.replace(/\\,/g, ',');
 
-        // 1. Ưu tiên tra cứu từ Custom Dict do người dùng nhập/import
-        if (window.customTranslationDict[cleanText]) {
+        // 1. Ưu tiên tra cứu từ Custom Dict
+        if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
             const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
-            if (dictValue) {
+            if (dictValue) { // Chỉ sử dụng nếu value không trống
                 const customResult = dictValue.replace(/,/g, '\\,');
                 return TRANSLATED_MARKER + customResult;
             }
@@ -381,14 +389,15 @@ window.addEventListener('message', (event) => {
 
         // 2. Tra cứu Cache tạm thời
         if (translateCache.has(cleanText)) {
-            return TRANSLATED_MARKER + translateCache.get(cleanText);
+            const cached = translateCache.get(cleanText);
+            return cached ? (TRANSLATED_MARKER + cached) : text;
         }
 
-        // 3. Nếu chưa có -> Dịch qua Google Translate và Lưu lại vào Dict
+        // 3. Gọi API Google Translate
         try {
             const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`; 
             const res = await fetch(url);
-            if (!res.ok) return text;
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`);
             
             const data = await res.json();
             if (data && data[0]) {
@@ -397,7 +406,6 @@ window.addEventListener('message', (event) => {
                 
                 translateCache.set(cleanText, result); 
 
-                // Tự động thu thập thoại mới vào storage — kèm tên nhân vật nếu có
                 window.postMessage({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
@@ -411,7 +419,18 @@ window.addEventListener('message', (event) => {
         } catch (err) {
             console.error(`[Network Error] "${cleanText}":`, err);
         }
-        return text; // thất bại: trả bản gốc, KHÔNG đánh dấu đã dịch
+
+        // DỊCH THẤT BẠI: Vẫn lưu vào Dict với value trống ""
+        // Không truyền seq mới nếu key đã từng tồn tại trong dict để giữ nguyên seq cũ ở content.js
+        window.postMessage({
+            type: 'SAVE_NEW_TRANSLATION',
+            original: cleanText,
+            translated: '', // Value trống
+            speaker: speakerName || undefined,
+            seq
+        }, '*');
+
+        return text; // Trả về bản gốc để game không bị lỗi hiển thị
     }
 
     // ================== 2. PARSE + DỊCH TOÀN BỘ SCRIPT ==================

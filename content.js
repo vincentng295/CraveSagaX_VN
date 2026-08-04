@@ -25,23 +25,43 @@ window.addEventListener('message', (event) => {
         const { original, translated, speaker, seq } = event.data;
         chrome.storage.local.get({ translationDict: {} }, (result) => {
             const dict = result.translationDict;
-            if (!dict[original]) {
-                // "time" (unix giây) vẫn giữ nguyên ý nghĩa cũ: thời điểm content.js
-                // NHẬN được message này — chỉ dùng để HIỂN THỊ ở trang Options.
-                // "seq" mới là mốc dùng để SẮP XẾP: injected.js đã chụp lại giá trị
-                // này ngay tại thời điểm câu thoại được xử lý (đồng bộ, đúng thứ tự
-                // xuất hiện trong file kịch bản), nên không bị xáo trộn bởi việc các
-                // request dịch song song hoàn thành không theo đúng thứ tự. Ở đây chỉ
-                // lưu lại nguyên giá trị nhận được, không tự tính toán gì thêm.
-                // "name" giữ nguyên là null nếu không rõ nhân vật (tương thích ngược).
+            const existingEntry = dict[original];
+
+            // 1. Nếu chưa có câu thoại này trong dict -> Lưu mới
+            if (!existingEntry) {
                 dict[original] = {
-                    translated,
+                    translated: translated || '',
                     name: speaker || null,
                     time: Math.floor(Date.now() / 1000),
                     ...(typeof seq === 'number' ? { seq } : {})
                 };
                 chrome.storage.local.set({ translationDict: dict }, () => {
-                    syncDictToInjected(); // Đồng bộ lại sau khi lưu
+                    syncDictToInjected();
+                });
+                return;
+            }
+
+            // 2. Nếu đã tồn tại nhưng trước đó bị trống ("") và lần này có bản dịch thành công
+            // -> Cập nhật bản dịch mới, GIỮ NGUYÊN time và seq cũ
+            const oldTranslated = typeof existingEntry === 'string' ? existingEntry : existingEntry.translated;
+            if ((!oldTranslated || !oldTranslated.trim()) && translated && translated.trim()) {
+                if (typeof existingEntry === 'string') {
+                    dict[original] = {
+                        translated: translated,
+                        name: speaker || null,
+                        time: Math.floor(Date.now() / 1000),
+                        ...(typeof seq === 'number' ? { seq } : {})
+                    };
+                } else {
+                    dict[original] = {
+                        ...existingEntry,
+                        translated: translated,
+                        // Nếu câu cũ chưa có name thì bổ sung name mới
+                        name: existingEntry.name || speaker || null 
+                    };
+                }
+                chrome.storage.local.set({ translationDict: dict }, () => {
+                    syncDictToInjected();
                 });
             }
         });
