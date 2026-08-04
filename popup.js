@@ -50,5 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.getElementById('btn-open-options')?.addEventListener('click', () => {
-    chrome.runtime.openOptionsPage();
+  if (chrome.runtime.openOptionsPage) {
+    chrome.runtime.openOptionsPage().catch(() => {
+      chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+    });
+  } else {
+    chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
+  }
 });

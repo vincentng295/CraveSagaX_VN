@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cập nhật danh sách Chap trong Filter Dropdown kèm Remark
+    // Cập nhật danh sách Chap trong Filter Dropdown kèm Remark  
     function populateChapFilterOptions() {
         const selectedChap = chapFilterSelect.value;
         const chapSet = new Set();
@@ -125,8 +125,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (chap) chapSet.add(chap);
         });
 
+        const chaps = Array.from(chapSet);
+
+        // Sắp xếp: Ưu tiên có Remark trước (A-Z), không có Remark đứng sau (A-Z theo tên file)
+        chaps.sort((a, b) => {
+            const remarkA = chapRemarks[a] ? chapRemarks[a].trim() : '';
+            const remarkB = chapRemarks[b] ? chapRemarks[b].trim() : '';
+
+            if (remarkA && remarkB) {
+                // Cả 2 đều có Remark -> so sánh theo Remark A-Z (hỗ trợ tiếng Việt)
+                return remarkA.localeCompare(remarkB, 'vi', { sensitivity: 'base', numeric: true });
+            } else if (remarkA) {
+                // Chỉ A có Remark -> A đứng trước
+                return -1;
+            } else if (remarkB) {
+                // Chỉ B có Remark -> B đứng trước
+                return 1;
+            } else {
+                // Cả 2 đều không có Remark -> so sánh theo tên file gốc A-Z
+                return a.localeCompare(b, 'vi', { sensitivity: 'base', numeric: true });
+            }
+        });
+
         chapFilterSelect.innerHTML = '<option value="">Tất cả Chap/File</option>';
-        Array.from(chapSet).sort().forEach(chap => {
+        chaps.forEach(chap => {
             const opt = document.createElement('option');
             opt.value = chap;
             
