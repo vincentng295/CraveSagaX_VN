@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản lý Phiên dịch - CraveSagaX VN</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f3f4f6;
+      color: #1f2937;
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .title h1 { margin: 0; font-size: 22px; color: #111827; }
+    .title p { margin: 4px 0 0; font-size: 13px; color: #6b7280; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .search-box {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: #10b981; color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-danger:hover { background: #dc2626; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+    th { background: #f9fafb; font-weight: 600; color: #374151; }
+    .input-edit {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .input-edit:focus {
+      outline: 2px solid #2563eb;
+      border-color: transparent;
+    }
+    .actions { display: flex; gap: 6px; }
+    .status-bar {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <div class="title">
+        <h1>Quản lý Từ điển Dịch thuật</h1>
+        <p>Thu thập, chỉnh sửa câu thoại đã dịch hoặc Import/Export file .json</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-success" id="btn-export">📥 Export JSON</button>
+        <button class="btn btn-primary" id="btn-import-trigger">📤 Import JSON</button>
+        <input type="file" id="file-import" accept=".json" style="display: none;">
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="search-input" class="search-box" placeholder="Tìm kiếm câu thoại gốc hoặc bản dịch...">
+      <button class="btn btn-danger" id="btn-clear-all">Xóa tất cả</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 45%;">Tiếng Anh (Gốc)</th>
+          <th style="width: 45%;">Tiếng Việt (Bản dịch)</th>
+          <th style="width: 10%;">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody id="dict-table-body">
+        <!-- Dữ liệu render dynamic -->
+      </tbody>
+    </table>
+
+    <div class="status-bar">
+      <span id="total-count">Tổng số câu: 0</span>
+      <span id="save-status">Tự động lưu khi sửa</span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

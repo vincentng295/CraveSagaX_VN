@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Crave Saga X Tiếng Việt",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Tự dịch hội thoại game Crave Saga X sang Tiếng Việt",
   "icons": {
     "16": "crave-saga.png",
@@ -13,6 +13,7 @@
     "default_popup": "popup.html",
     "default_icon": "crave-saga.png"
   },
+  "options_page": "options.html",
   "permissions": [
     "storage",
     "activeTab"
@@ -38,7 +39,7 @@
       "matches": [
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
         "https://d2z1bqkh6aowmt.cloudfront.net/client/1.113.0/index_erolabs.html?*"
-     ],
+      ],
       "js": ["injected.js"],
       "all_frames": true,
       "run_at": "document_start",

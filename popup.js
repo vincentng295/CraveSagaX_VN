@@ -48,3 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCopy('btn-copy-stk', 'stk');
     setupCopy('btn-copy-memo', 'memo');
 });
+
+document.getElementById('btn-open-options')?.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+});

@@ -1,5 +1,6 @@
 
-window.is_translated = 1;
+let is_translated = 1;
+let customTranslationDict = {};
 
 // Ký tự vô hình (Zero Width Space, U+200B) dùng làm "cờ đánh dấu": khi tầng
 // chặn XHR (IIFE thứ 2 bên dưới) đã dịch sẵn 1 đoạn thoại trong file kịch bản,
@@ -14,6 +15,12 @@ const TRANSLATED_MARKER = '\u200B';
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         window.is_translated = event.data.enabled ? 1 : 0;
+    }
+});
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
+        window.customTranslationDict = event.data.dict || {};
     }
 });
 
@@ -133,13 +140,33 @@ window.addEventListener('message', (event) => {
         async function translateText(text) {
             if (!window.is_translated) return text;
             if (!text || !text.trim()) return text;
-            if (translationCache.has(text)) return translationCache.get(text);
+            const cleanText = text.trim();
+
+            // 1. Kiểm tra từ điển Custom Dict trước (đã import hoặc thu thập)
+            if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
+                return window.customTranslationDict[cleanText];
+            }
+
+            // 2. Kiểm tra bộ nhớ đệm Cache tạm thời
+            if (translationCache.has(cleanText)) return translationCache.get(cleanText);
+
+            // 3. Nếu chưa có -> Gọi API Google Translate
             try {
-                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(text)}`;
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 let translated = data[0].map(item => item[0]).join('');
-                translationCache.set(text, translated);
+
+                // Lưu vào Cache tạm thời
+                translationCache.set(cleanText, translated);
+
+                // Lưu vào Dictionary để ghi nhớ lâu dài và sync sang Options
+                window.postMessage({
+                    type: 'SAVE_NEW_TRANSLATION',
+                    original: cleanText,
+                    translated: translated
+                }, '*');
+
                 return translated;
             } catch (e) {
                 return null;
@@ -292,25 +319,38 @@ window.addEventListener('message', (event) => {
         if (!text || !text.trim()) return text;
         const cleanText = text.replace(/\\,/g, ',');
 
-        // Cache lưu bản dịch THUẦN (không kèm marker) — marker chỉ gắn vào lúc
-        // trả kết quả ra, để mọi lần trả (dù từ cache hay fetch mới) đều nhất quán.
+        // 1. Ưu tiên tra cứu từ Custom Dict do người dùng nhập/import
+        if (window.customTranslationDict[cleanText]) {
+            const customResult = window.customTranslationDict[cleanText].replace(/,/g, '\\,');
+            return TRANSLATED_MARKER + customResult;
+        }
+
+        // 2. Tra cứu Cache tạm thời
         if (translateCache.has(cleanText)) {
             return TRANSLATED_MARKER + translateCache.get(cleanText);
         }
 
+        // 3. Nếu chưa có -> Dịch qua Google Translate và Lưu lại vào Dict
         try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`; 
             const res = await fetch(url);
-            if (!res.ok) {
-                console.error(`[GT Error ${res.status}] "${cleanText}"`);
-                return text; // thất bại: trả bản gốc, KHÔNG đánh dấu đã dịch
-            }
+            if (!res.ok) return text;
+            
             const data = await res.json();
             if (data && data[0]) {
                 const translated = data[0].map(seg => seg[0]).join('');
                 const result = translated.replace(/,/g, '\\,');
-                translateCache.set(cleanText, result);
-                return TRANSLATED_MARKER + result; // thành công: đánh dấu
+                
+                translateCache.set(cleanText, result); 
+
+                // Tự động thu thập thoại mới vào storage
+                window.postMessage({
+                    type: 'SAVE_NEW_TRANSLATION',
+                    original: cleanText,
+                    translated: translated
+                }, '*');
+
+                return TRANSLATED_MARKER + result; 
             }
         } catch (err) {
             console.error(`[Network Error] "${cleanText}":`, err);
