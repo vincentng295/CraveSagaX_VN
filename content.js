@@ -22,11 +22,14 @@ syncDictToInjected();
 // Lắng nghe lệnh lưu câu dịch mới từ injected.js
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SAVE_NEW_TRANSLATION') {
-        const { original, translated } = event.data;
+        const { original, translated, speaker } = event.data;
         chrome.storage.local.get({ translationDict: {} }, (result) => {
             const dict = result.translationDict;
             if (!dict[original]) {
-                dict[original] = translated;
+                // Nếu biết tên nhân vật thoại câu này -> lưu dạng object kèm "name".
+                // Nếu không (lời dẫn game, text UI...) -> vẫn lưu chuỗi thuần như cũ
+                // để tương thích ngược với dữ liệu đã thu thập trước đây.
+                dict[original] = speaker ? { translated, name: speaker } : translated;
                 chrome.storage.local.set({ translationDict: dict }, () => {
                     syncDictToInjected(); // Đồng bộ lại sau khi lưu
                 });

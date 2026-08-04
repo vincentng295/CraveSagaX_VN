@@ -9,6 +9,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let translationDict = {};
 
+    // Dict entry giờ hỗ trợ 2 dạng (tương thích ngược với dữ liệu cũ):
+    //   - string: bản dịch thuần, không rõ nhân vật
+    //   - object { translated, name }: bản dịch kèm tên nhân vật đã thoại câu đó
+    function getEntryValue(entry) {
+        if (typeof entry === 'string') return entry;
+        if (entry && typeof entry === 'object') return entry.translated || '';
+        return '';
+    }
+
+    function getEntryName(entry) {
+        if (entry && typeof entry === 'object') return entry.name || '';
+        return '';
+    }
+
+    // Cập nhật bản dịch cho 1 key, GIỮ NGUYÊN tên nhân vật nếu entry đang có
+    function updateEntryTranslation(key, newTranslated) {
+        const entry = translationDict[key];
+        if (entry && typeof entry === 'object') {
+            translationDict[key] = { ...entry, translated: newTranslated };
+        } else {
+            translationDict[key] = newTranslated;
+        }
+    }
+
     // Load dữ liệu từ chrome.storage.local
     function loadDictionary() {
         chrome.storage.local.get({ translationDict: {} }, (result) => {
@@ -24,8 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let count = 0;
 
         keys.forEach((key) => {
-            const value = translationDict[key];
-            if (filter && !key.toLowerCase().includes(filter) && !value.toLowerCase().includes(filter)) {
+            const entry = translationDict[key];
+            const value = getEntryValue(entry);
+            const speakerName = getEntryName(entry);
+            if (filter && !key.toLowerCase().includes(filter) && !value.toLowerCase().includes(filter) && !speakerName.toLowerCase().includes(filter)) {
                 return;
             }
 
@@ -33,12 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
 
             tr.innerHTML = `
+                <td>${speakerName ? `<span class="speaker-badge">${escapeHtml(speakerName)}</span>` : '<span class="speaker-none">—</span>'}</td>
                 <td><strong>${escapeHtml(key)}</strong></td>
                 <td>
                     <input type="text" class="input-edit" data-key="${escapeHtml(key)}" value="${escapeHtml(value)}">
                 </td>
                 <td>
                     <div class="actions">
+                        <button class="btn btn-primary btn-save" data-key="${escapeHtml(key)}">Lưu</button>
                         <button class="btn btn-danger btn-delete" data-key="${escapeHtml(key)}">Xóa</button>
                     </div>
                 </td>
@@ -49,15 +77,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
         totalCountEl.innerText = `Tổng số câu: ${count} / ${keys.length}`;
 
-        // Lắng nghe sự kiện sửa input
+        // Lắng nghe sự kiện sửa input (tự động lưu khi rời khỏi ô nhập)
         document.querySelectorAll('.input-edit').forEach(input => {
             input.addEventListener('change', (e) => {
                 const origKey = e.target.getAttribute('data-key');
                 const newVal = e.target.value.trim();
                 if (newVal) {
-                    translationDict[origKey] = newVal;
+                    updateEntryTranslation(origKey, newVal);
                     saveDictionary();
                 }
+            });
+        });
+
+        // Lắng nghe sự kiện bấm nút "Lưu" — lưu ngay bản dịch hiện tại của dòng đó
+        document.querySelectorAll('.btn-save').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const key = e.target.getAttribute('data-key');
+                const row = e.target.closest('tr');
+                const input = row.querySelector('.input-edit');
+                const newVal = input.value.trim();
+                if (!newVal) return;
+
+                updateEntryTranslation(key, newVal);
+                saveDictionary();
+
+                // Phản hồi trực quan ngắn để người dùng biết đã lưu
+                const originalLabel = e.target.innerText;
+                e.target.innerText = '✓ Đã lưu';
+                e.target.classList.add('saved');
+                setTimeout(() => {
+                    e.target.innerText = originalLabel;
+                    e.target.classList.remove('saved');
+                }, 1200);
             });
         });
 

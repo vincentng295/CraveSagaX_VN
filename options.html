@@ -85,6 +85,18 @@
       border-color: transparent;
     }
     .actions { display: flex; gap: 6px; }
+    .speaker-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: #eef2ff;
+      color: #4338ca;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .speaker-none { color: #9ca3af; }
+    .btn-save.saved { background: #10b981; }
     .status-bar {
       margin-top: 16px;
       font-size: 13px;
@@ -117,9 +129,10 @@
     <table>
       <thead>
         <tr>
-          <th style="width: 45%;">Tiếng Anh (Gốc)</th>
-          <th style="width: 45%;">Tiếng Việt (Bản dịch)</th>
-          <th style="width: 10%;">Thao tác</th>
+          <th style="width: 12%;">Nhân vật</th>
+          <th style="width: 38%;">Tiếng Anh (Gốc)</th>
+          <th style="width: 35%;">Tiếng Việt (Bản dịch)</th>
+          <th style="width: 15%;">Thao tác</th>
         </tr>
       </thead>
       <tbody id="dict-table-body">

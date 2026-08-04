@@ -12,6 +12,18 @@ let customTranslationDict = {};
 // phía dưới cùng tham chiếu tới đúng 1 giá trị.
 const TRANSLATED_MARKER = '\u200B';
 
+// customTranslationDict giờ hỗ trợ 2 dạng giá trị cho mỗi key (để tương thích
+// ngược với các bản dịch đã thu thập trước đây):
+//   - string: bản dịch thuần (không có thông tin nhân vật) — dạng cũ
+//   - object { translated, name }: bản dịch kèm tên nhân vật đã nói câu đó
+// Hàm này chuẩn hoá cả 2 dạng về 1 chuỗi bản dịch duy nhất, dùng chung ở mọi
+// nơi cần đọc dict (live-translate lẫn dịch file kịch bản qua XHR).
+function extractTranslatedValue(entry) {
+    if (typeof entry === 'string') return entry;
+    if (entry && typeof entry === 'object' && typeof entry.translated === 'string') return entry.translated;
+    return null;
+}
+
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         window.is_translated = event.data.enabled ? 1 : 0;
@@ -144,7 +156,8 @@ window.addEventListener('message', (event) => {
 
             // 1. Kiểm tra từ điển Custom Dict trước (đã import hoặc thu thập)
             if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
-                return window.customTranslationDict[cleanText];
+                const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
+                if (dictValue) return dictValue;
             }
 
             // 2. Kiểm tra bộ nhớ đệm Cache tạm thời
@@ -315,14 +328,21 @@ window.addEventListener('message', (event) => {
     const translateCache = new Map();
 
     // ================== 1. DỊCH MỘT CÂU ==================
-    async function translateSingleText(text) {
+    // speakerName: tên nhân vật đang nói câu này (lấy từ dòng "name," gần nhất
+    // phía trước trong file kịch bản), hoặc null nếu là lời dẫn/không rõ nhân vật.
+    // Chỉ dùng để LƯU kèm vào dict khi phát hiện câu mới — không ảnh hưởng gì
+    // tới bản thân việc dịch.
+    async function translateSingleText(text, speakerName = null) {
         if (!text || !text.trim()) return text;
         const cleanText = text.replace(/\\,/g, ',');
 
         // 1. Ưu tiên tra cứu từ Custom Dict do người dùng nhập/import
         if (window.customTranslationDict[cleanText]) {
-            const customResult = window.customTranslationDict[cleanText].replace(/,/g, '\\,');
-            return TRANSLATED_MARKER + customResult;
+            const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
+            if (dictValue) {
+                const customResult = dictValue.replace(/,/g, '\\,');
+                return TRANSLATED_MARKER + customResult;
+            }
         }
 
         // 2. Tra cứu Cache tạm thời
@@ -343,11 +363,12 @@ window.addEventListener('message', (event) => {
                 
                 translateCache.set(cleanText, result); 
 
-                // Tự động thu thập thoại mới vào storage
+                // Tự động thu thập thoại mới vào storage — kèm tên nhân vật nếu có
                 window.postMessage({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
-                    translated: translated
+                    translated: translated,
+                    speaker: speakerName || undefined
                 }, '*');
 
                 return TRANSLATED_MARKER + result; 
@@ -382,6 +403,16 @@ window.addEventListener('message', (event) => {
         return parts;
     }
 
+    // ================== TRÍCH TÊN NHÂN VẬT TỪ DÒNG "name,..." ==================
+    // Dòng "name,<size=32>Schmiel</size>," -> tên nhân vật là "Schmiel".
+    // Dòng "name," (rỗng) -> không có nhân vật (lời dẫn game) -> trả về null.
+    function extractSpeakerName(line) {
+        const fields = splitUnescapedComma(line); // fields[0] === "name"
+        const raw = (fields[1] || '').replace(/\\,/g, ',');
+        const stripped = raw.replace(/<[^>]*>/g, '').trim();
+        return stripped || null;
+    }
+
     // ================== XỬ LÝ DÒNG select,option1,option2,... ==================
     async function processSelectLine(line) {
         const fields = splitUnescapedComma(line); // fields[0] === "select"
@@ -397,12 +428,25 @@ window.addEventListener('message', (event) => {
     async function processStoryScript(rawScript) {
         const lines = rawScript.split('\n');
 
+        // Theo dõi nhân vật đang thoại xuyên suốt file kịch bản. Array.prototype.map
+        // gọi callback cho từng dòng THEO THỨ TỰ, đồng bộ, cho tới khi gặp await đầu
+        // tiên trong mỗi lần gọi — nên việc đọc/ghi currentSpeaker ở phần đồng bộ
+        // (trước await) của mỗi dòng vẫn đảm bảo đúng thứ tự xuất hiện trong file,
+        // dù các bản dịch msg,... phía sau chạy bất đồng bộ song song.
+        let currentSpeaker = null;
+
         const tasks = lines.map(async (line) => {
+            if (line.startsWith('name,')) {
+                currentSpeaker = extractSpeakerName(line);
+                return line;
+            }
+
             if (line.startsWith('msg,')) {
                 const match = line.match(MSG_LINE_REGEX);
                 if (!match || !match[2] || !match[2].trim()) return line;
                 const [, prefix, content, suffix] = match;
-                const translated = await translateSingleText(content);
+                const speakerForThisLine = currentSpeaker; // chụp lại tại thời điểm này
+                const translated = await translateSingleText(content, speakerForThisLine);
                 return `${prefix}${translated}${suffix}`;
             }
 
@@ -410,7 +454,7 @@ window.addEventListener('message', (event) => {
                 return await processSelectLine(line);
             }
 
-            return line; // các dòng lệnh khác (clickwait, name, ...) giữ nguyên
+            return line; // các dòng lệnh khác (clickwait, ...) giữ nguyên
         });
 
         return (await Promise.all(tasks)).join('\n');
