@@ -1,34 +1,81 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" id="html-root">
 <head>
   <meta charset="UTF-8">
   <title>Quản lý Phiên dịch - CraveSagaX VN</title>
   <style>
+    :root {
+      --bg-page: #f3f4f6;
+      --bg-container: #fff;
+      --text-main: #1f2937;
+      --text-heading: #111827;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+      --border-input: #d1d5db;
+      --bg-input: #fff;
+      --bg-th: #f9fafb;
+      --text-th: #374151;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      --speaker-bg: #eef2ff;
+      --speaker-text: #4338ca;
+      --chap-bg: #f3f4f6;
+      --chap-text: #374151;
+      --speaker-none: #9ca3af;
+      --row-hover: #f9fafb;
+    }
+    [data-theme="dark"] {
+      --bg-page: #111827;
+      --bg-container: #1f2937;
+      --text-main: #e5e7eb;
+      --text-heading: #f9fafb;
+      --text-muted: #9ca3af;
+      --border-color: #374151;
+      --border-input: #4b5563;
+      --bg-input: #111827;
+      --bg-th: #111827;
+      --text-th: #d1d5db;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.4);
+      --speaker-bg: #312e81;
+      --speaker-text: #c7d2fe;
+      --chap-bg: #374151;
+      --chap-text: #d1d5db;
+      --speaker-none: #6b7280;
+      --row-hover: #263041;
+    }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #f3f4f6;
-      color: #1f2937;
+      background-color: var(--bg-page);
+      color: var(--text-main);
       margin: 0;
       padding: 24px;
+      transition: background-color 0.2s, color 0.2s;
     }
     .container {
       max-width: 980px;
       margin: 0 auto;
-      background: #fff;
+      background: var(--bg-container);
       padding: 24px;
       border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow);
+      transition: background-color 0.2s;
     }
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #e5e7eb;
+      border-bottom: 2px solid var(--border-color);
       padding-bottom: 16px;
       margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .title h1 { margin: 0; font-size: 22px; color: #111827; }
-    .title p { margin: 4px 0 0; font-size: 13px; color: #6b7280; }
+    .title h1 { margin: 0; font-size: 22px; color: var(--text-heading); }
+    .title p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
     .toolbar {
       display: flex;
       gap: 10px;
@@ -39,9 +86,11 @@
       flex: 1;
       min-width: 200px;
       padding: 8px 12px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-input);
       border-radius: 6px;
       font-size: 14px;
+      background: var(--bg-input);
+      color: var(--text-main);
     }
     .btn {
       padding: 8px 16px;
@@ -61,7 +110,24 @@
     .btn-success:hover { background: #059669; }
     .btn-danger { background: #ef4444; color: #fff; }
     .btn-danger:hover { background: #dc2626; }
-    
+
+    .theme-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-input);
+      background: var(--bg-input);
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+    .theme-toggle-btn:hover { border-color: #2563eb; }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -70,17 +136,20 @@
     th, td {
       text-align: left;
       padding: 10px 12px;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--border-color);
       font-size: 14px;
     }
-    th { background: #f9fafb; font-weight: 600; color: #374151; }
+    th { background: var(--bg-th); font-weight: 600; color: var(--text-th); }
+    tbody tr:hover { background: var(--row-hover); }
     .input-edit {
       width: 100%;
       padding: 6px 8px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-input);
       border-radius: 4px;
       font-size: 13px;
       box-sizing: border-box;
+      background: var(--bg-input);
+      color: var(--text-main);
     }
     .input-edit:focus {
       outline: 2px solid #2563eb;
@@ -90,8 +159,8 @@
     .speaker-badge {
       display: inline-block;
       padding: 3px 8px;
-      background: #eef2ff;
-      color: #4338ca;
+      background: var(--speaker-bg);
+      color: var(--speaker-text);
       border-radius: 999px;
       font-size: 12px;
       font-weight: 600;
@@ -100,33 +169,34 @@
     .chap-badge {
       display: inline-block;
       padding: 3px 8px;
-      background: #f3f4f6;
-      color: #374151;
+      background: var(--chap-bg);
+      color: var(--chap-text);
       border-radius: 4px;
       font-size: 11px;
       font-family: monospace;
       white-space: nowrap;
     }
-    .speaker-none { color: #9ca3af; }
+    .speaker-none { color: var(--speaker-none); }
     .btn-save.saved { background: #10b981; }
     .status-bar {
       margin-top: 16px;
       font-size: 13px;
-      color: #6b7280;
+      color: var(--text-muted);
       display: flex;
       justify-content: space-between;
     }
     .time-cell {
       font-size: 12px;
-      color: #6b7280;
+      color: var(--text-muted);
       white-space: nowrap;
     }
     .select-box {
       padding: 8px 10px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-input);
       border-radius: 6px;
       font-size: 13px;
-      background: #fff;
+      background: var(--bg-input);
+      color: var(--text-main);
     }
   </style>
 </head>
@@ -138,10 +208,13 @@
         <h1>Quản lý Từ điển Dịch thuật</h1>
         <p>Thu thập, chỉnh sửa câu thoại đã dịch hoặc Import/Export file .json</p>
       </div>
-      <div class="toolbar">
-        <button class="btn btn-success" id="btn-export">📥 Export JSON (Filtered)</button>
-        <button class="btn btn-primary" id="btn-import-trigger">📤 Import JSON</button>
-        <input type="file" id="file-import" accept=".json" multiple style="display: none;">
+      <div class="header-actions">
+        <button class="theme-toggle-btn" id="btn-theme-toggle">🌙 Dark Mode</button>
+        <div class="toolbar" style="margin-bottom: 0;">
+          <button class="btn btn-success" id="btn-export">📥 Export JSON (Filtered)</button>
+          <button class="btn btn-primary" id="btn-import-trigger">📤 Import JSON</button>
+          <input type="file" id="file-import" accept=".json" multiple style="display: none;">
+        </div>
       </div>
     </div>
 

@@ -1,4 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ==== Dark Mode ====
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
+
+    function applyTheme(isDark) {
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        if (btnThemeToggle) {
+            btnThemeToggle.innerText = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+    }
+
+    chrome.storage.local.get({ darkMode: false }, (result) => {
+        applyTheme(result.darkMode);
+    });
+
+    if (btnThemeToggle) {
+        btnThemeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newIsDark = !isDark;
+            applyTheme(newIsDark);
+            chrome.storage.local.set({ darkMode: newIsDark });
+        });
+    }
+
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local' && changes.darkMode) {
+            applyTheme(changes.darkMode.newValue);
+        }
+    });
+
     const tableBody = document.getElementById('dict-table-body');
     const searchInput = document.getElementById('search-input');
     const chapFilterSelect = document.getElementById('chap-filter-select');

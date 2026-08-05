@@ -3,6 +3,11 @@ let customTranslationDict = {};
 
 const TRANSLATED_MARKER = '\u200B';
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Thay đổi màu nền của trang web để phù hợp với chế độ tối
+    document.querySelector('body')?.style.setProperty('background-color', '#000000', 'important');
+});
+
 let __translationSeqCounter = Date.now();
 function nextTranslationSeq() {
     __translationSeqCounter += 1;
