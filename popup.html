@@ -162,6 +162,67 @@
       margin-top: 8px;
       font-style: italic;
     }
+
+    /* Current Chap / Remark Styles */
+    .chap-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .chap-file-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .chap-file-badge {
+      font-family: monospace;
+      font-size: 11px;
+      background: #f3f4f6;
+      color: #374151;
+      padding: 3px 8px;
+      border-radius: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+    .chap-remark-row {
+      display: flex;
+      gap: 6px;
+    }
+    .chap-remark-input {
+      flex: 1;
+      min-width: 0;
+      padding: 7px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .chap-remark-input:focus {
+      outline: 2px solid #2563eb;
+      border-color: transparent;
+    }
+    .btn-chap-save {
+      padding: 7px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-chap-save:hover { background: #1d4ed8; }
+    .btn-chap-save.saved { background: #10b981; }
+    .chap-empty {
+      font-size: 12px;
+      color: #9ca3af;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -179,6 +240,20 @@
         <input type="checkbox" id="translate-toggle" checked>
         <span class="slider"></span>
       </label>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Chap / File vừa chơi</div>
+    <div class="chap-card">
+      <div class="chap-file-row">
+        <span class="chap-file-badge" id="current-chap-file">—</span>
+      </div>
+      <div class="chap-remark-row" id="chap-remark-row" style="display: none;">
+        <input type="text" id="current-chap-remark" class="chap-remark-input" placeholder="Đặt tên hiển thị (Remark)...">
+        <button class="btn-chap-save" id="btn-chap-save">Lưu</button>
+      </div>
+      <div class="chap-empty" id="chap-empty-msg" style="display: none;">Chưa có dữ liệu chap nào được thu thập.</div>
     </div>
   </div>
 
