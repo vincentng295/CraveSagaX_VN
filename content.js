@@ -113,3 +113,12 @@ window.addEventListener('message', (event) => {
         }
     }
 });
+
+// Lắng nghe sự kiện thay đổi storage từ Options hoặc Popup
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.translationDict) {
+        localDictCache = changes.translationDict.newValue || {};
+        isDictLoaded = true;
+        syncDictToInjected();
+    }
+});

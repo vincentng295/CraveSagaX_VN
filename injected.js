@@ -27,6 +27,21 @@ window.addEventListener('message', (event) => {
     }
 });
 
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
+        window.customTranslationDict = event.data.dict || {};
+        
+        // Xóa cache dịch tạm thời để bắt buộc dùng từ điển mới nhập vào
+        if (typeof translationCache !== 'undefined' && translationCache instanceof Map) {
+            translationCache.clear();
+        }
+        if (typeof translateCache !== 'undefined' && translateCache instanceof Map) {
+            translateCache.clear();
+        }
+        console.log("-> [AutoTranslate]: Đã cập nhật từ điển!");
+    }
+});
+
 (function () {
     let lastMeasureCtx = null;
     let lastMeasureFont = null;
