@@ -319,29 +319,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnImportTrigger.addEventListener('click', () => fileImport.click());
 
-    fileImport.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => resolve(event.target.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsText(file);
+        });
+    }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
+    function getFileBaseName(fileName) {
+        return fileName.replace(/\.json$/i, '');
+    }
+
+    fileImport.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        let successCount = 0;
+        let failCount = 0;
+        const failedNames = [];
+
+        for (const file of files) {
             try {
-                const importedDict = JSON.parse(event.target.result);
-                if (typeof importedDict === 'object' && !Array.isArray(importedDict)) {
+                const text = await readFileAsText(file);
+                const importedDict = JSON.parse(text);
+                if (typeof importedDict === 'object' && importedDict !== null && !Array.isArray(importedDict)) {
+                    // Thu thập các Chap/File xuất hiện trong file JSON đang import
+                    const chapsInFile = new Set();
+                    Object.values(importedDict).forEach((entry) => {
+                        const chap = getEntryChap(entry);
+                        if (chap) chapsInFile.add(chap);
+                    });
+
                     translationDict = { ...translationDict, ...importedDict };
-                    migrateMissingTimes();
-                    saveDictionary();
-                    populateChapFilterOptions();
-                    renderTable();
-                    alert("Import từ điển thành công!");
+
+                    // Tự động đặt Remark theo tên file JSON đã import (chỉ khi Chap đó chưa có Remark)
+                    const baseName = getFileBaseName(file.name);
+                    chapsInFile.forEach((chap) => {
+                        if (!chapRemarks[chap]) {
+                            chapRemarks[chap] = baseName;
+                        }
+                    });
+
+                    successCount++;
                 } else {
-                    alert("File JSON không đúng định dạng Dictionary!");
+                    failCount++;
+                    failedNames.push(file.name);
                 }
             } catch (err) {
-                alert("Lỗi đọc file JSON!");
+                failCount++;
+                failedNames.push(file.name);
             }
-        };
-        reader.readAsText(file);
+        }
+
+        if (successCount > 0) {
+            migrateMissingTimes();
+            saveDictionary();
+            populateChapFilterOptions();
+            renderTable();
+        }
+
+        // Reset input để có thể chọn lại cùng 1 file lần sau nếu cần
+        fileImport.value = '';
+
+        let msg = `Đã import thành công ${successCount}/${files.length} file.`;
+        if (failCount > 0) {
+            msg += `\nCác file lỗi/không đúng định dạng: ${failedNames.join(', ')}`;
+        }
+        alert(msg);
     });
 
     searchInput.addEventListener('input', () => renderTable());
