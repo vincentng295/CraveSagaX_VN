@@ -413,6 +413,14 @@ window.addEventListener('message', (event) => {
         return fields.join(',');
     }
 
+    function hasDialogueContent(rawText) {
+        if (!rawText || !rawText.trim()) return false;
+        return rawText.split('\n').some((line) => {
+            const trimmed = line.trim();
+            return trimmed.startsWith('name,') || trimmed.startsWith('msg,') || trimmed.startsWith('select,');
+        });
+    }
+
     async function processStoryScript(rawScript, fileName = null) {
         const lines = rawScript.split('\n');
         let currentSpeaker = null;
@@ -510,11 +518,13 @@ window.addEventListener('message', (event) => {
 
             st.translating = true;
 
-            if (st.fileName) {
+            const rawText = originalResponseTextDesc.get.call(this);
+
+            // Một số file script (vd: synopsis) không chứa lời thoại (name,/msg,/select,)
+            // -> bỏ qua, không báo GAME_CHAP_OPENED để tránh nhận nhầm là chap đang chơi.
+            if (st.fileName && hasDialogueContent(rawText)) {
                 window.postMessage({ type: 'GAME_CHAP_OPENED', chap: st.fileName }, '*');
             }
-
-            const rawText = originalResponseTextDesc.get.call(this);
 
             if (!window.is_translated) {
                 console.log(`[Story Intercepted] ${st.fileName || ''} — dịch tắt, dùng bản gốc`);
