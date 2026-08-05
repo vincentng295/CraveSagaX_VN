@@ -58,3 +58,8 @@ document.getElementById('btn-open-options')?.addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
   }
 });
+
+const qrImage = document.getElementById('donation-qr');
+if (qrImage) {
+  qrImage.src = chrome.runtime.getURL('images/donation-qr.png');
+}
