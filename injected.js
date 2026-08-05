@@ -398,6 +398,16 @@ window.addEventListener('message', (event) => {
         return translated.join(',');
     }
 
+    function markNameLineTranslated(line) {
+        const fields = splitUnescapedComma(line);
+        if (fields.length > 1 && fields[1] && fields[1].trim()) {
+            // Chèn marker vào đầu field tên để hook Cocos (proto.string setter)
+            // nhận ra đây là text "đã dịch" và không tự động dịch tên nhân vật.
+            fields[1] = TRANSLATED_MARKER + fields[1];
+        }
+        return fields.join(',');
+    }
+
     async function processStoryScript(rawScript, fileName = null) {
         const lines = rawScript.split('\n');
         let currentSpeaker = null;
@@ -405,7 +415,7 @@ window.addEventListener('message', (event) => {
         const tasks = lines.map(async (line) => {
             if (line.startsWith('name,')) {
                 currentSpeaker = extractSpeakerName(line);
-                return line;
+                return markNameLineTranslated(line);
             }
 
             if (line.startsWith('msg,')) {
