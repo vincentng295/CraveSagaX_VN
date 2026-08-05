@@ -494,6 +494,11 @@ window.addEventListener('message', (event) => {
             }
 
             st.translating = true;
+
+            if (st.fileName) {
+                window.postMessage({ type: 'GAME_CHAP_OPENED', chap: st.fileName }, '*');
+            }
+
             const rawText = originalResponseTextDesc.get.call(this);
 
             if (!window.is_translated) {

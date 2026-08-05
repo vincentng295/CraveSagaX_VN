@@ -102,6 +102,12 @@ function scheduleSaveToStorage() {
 initDictCache();
 
 window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'GAME_CHAP_OPENED' && event.data.chap) {
+        updateCurrentChap(event.data.chap);
+    }
+});
+
+window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SAVE_NEW_TRANSLATION') {
         if (event.data.chap) updateCurrentChap(event.data.chap);
 
