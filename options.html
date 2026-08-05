@@ -132,21 +132,29 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
+      table-layout: fixed;
     }
     th, td {
       text-align: left;
       padding: 10px 12px;
       border-bottom: 1px solid var(--border-color);
       font-size: 14px;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     th { background: var(--bg-th); font-weight: 600; color: var(--text-th); }
     tbody tr:hover { background: var(--row-hover); }
     .input-edit {
       width: 100%;
+      field-sizing: content;
+      min-height: 38px;
       padding: 6px 8px;
       border: 1px solid var(--border-input);
       border-radius: 4px;
       font-size: 13px;
+      font-family: inherit;
+      line-height: 1.4;
+      resize: vertical;
       box-sizing: border-box;
       background: var(--bg-input);
       color: var(--text-main);
@@ -155,7 +163,8 @@
       outline: 2px solid #2563eb;
       border-color: transparent;
     }
-    .actions { display: flex; gap: 6px; }
+    .actions { display: flex; gap: 6px; flex-wrap: nowrap; }
+    .actions .btn { padding: 6px 10px; }
     .speaker-badge {
       display: inline-block;
       padding: 3px 8px;
@@ -168,6 +177,7 @@
     }
     .chap-badge {
       display: inline-block;
+      max-width: 100%;
       padding: 3px 8px;
       background: var(--chap-bg);
       color: var(--chap-text);
@@ -175,6 +185,9 @@
       font-size: 11px;
       font-family: monospace;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: bottom;
     }
     .speaker-none { color: var(--speaker-none); }
     .btn-save.saved { background: #10b981; }
@@ -236,14 +249,22 @@
     </div>
 
     <table>
+      <colgroup>
+        <col style="width: 120px;">
+        <col style="width: 90px;">
+        <col style="width: 37%;">
+        <col style="width: 33%;">
+        <col style="width: 120px;">
+        <col style="width: 150px;">
+      </colgroup>
       <thead>
         <tr>
-          <th style="width: 12%;">Chap / File</th>
-          <th style="width: 10%;">Nhân vật</th>
-          <th style="width: 28%;">Tiếng Anh (Gốc)</th>
-          <th style="width: 25%;">Tiếng Việt (Bản dịch)</th>
-          <th style="width: 13%;">Thời gian</th>
-          <th style="width: 12%;">Thao tác</th>
+          <th>Chap / File</th>
+          <th>Nhân vật</th>
+          <th>Tiếng Anh (Gốc)</th>
+          <th>Tiếng Việt (Bản dịch)</th>
+          <th>Thời gian</th>
+          <th>Thao tác</th>
         </tr>
       </thead>
       <tbody id="dict-table-body">

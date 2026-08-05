@@ -247,8 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${displayChapBadge}</td>
                 <td>${speakerName ? `<span class="speaker-badge">${escapeHtml(speakerName)}</span>` : '<span class="speaker-none">—</span>'}</td>
                 <td><strong>${escapeHtml(key)}</strong></td>
-                <td>
-                    <input type="text" class="input-edit" data-key="${escapeHtml(key)}" value="${escapeHtml(value)}">
+                <td class="cell-textarea">
+                    <textarea class="input-edit" data-key="${escapeHtml(key)}" rows="1">${escapeHtml(value)}</textarea>
                 </td>
                 <td><span class="time-cell">${escapeHtml(formatTime(entryTime))}</span></td>
                 <td>
