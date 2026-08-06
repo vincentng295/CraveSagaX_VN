@@ -20,6 +20,13 @@ function extractTranslatedValue(entry) {
     return null;
 }
 
+// Escape any bare " that isn't already escaped as \" (leaves \" and \\\" untouched),
+// since the story script's CSV-like format requires quotes to be escaped just like commas.
+function escapeUnescapedQuotes(text) {
+    if (typeof text !== 'string') return text;
+    return text.replace(/\\?"/g, (m) => (m === '"' ? '\\"' : m));
+}
+
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         window.is_translated = event.data.enabled ? 1 : 0;
@@ -316,7 +323,7 @@ window.addEventListener('message', (event) => {
         if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
             const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
             if (dictValue) {
-                const customResult = dictValue.replace(/,/g, '\\,');
+                const customResult = escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,');
                 return TRANSLATED_MARKER + customResult;
             }
         }
@@ -334,7 +341,7 @@ window.addEventListener('message', (event) => {
             const data = await res.json();
             if (data && data[0]) {
                 const translated = data[0].map(seg => seg[0]).join('');
-                const result = translated.replace(/,/g, '\\,');
+                const result = escapeUnescapedQuotes(translated).replace(/,/g, '\\,');
                 
                 translateCache.set(cleanText, result); 
 
