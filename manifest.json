@@ -28,7 +28,8 @@
     "https://d2z1bqkh6aowmt.cloudfront.net/client/*",
     "https://d1njotu2ezlj2j.cloudfront.net/g/client/*",
     "https://*.johren.net/*",
-    "https://translate.googleapis.com/*"
+    "https://translate.googleapis.com/*",
+    "https://raw.githubusercontent.com/*"
   ],
   "content_scripts": [
     {
