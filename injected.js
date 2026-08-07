@@ -478,11 +478,6 @@ window.addEventListener('message', (event) => {
         return (await Promise.all(tasks)).join('\n');
     }
 
-    // =====================================================
-    // STEALTH HOOK — giả native code cho các hàm bị override
-    // để tránh game/engine tự kiểm tra toString()/descriptor
-    // phát hiện có script can thiệp vào XHR.
-    // =====================================================
     const _nativeToString = Function.prototype.toString;
     const __fakeNativeMap = new WeakMap();
 
@@ -502,8 +497,6 @@ window.addEventListener('message', (event) => {
     });
     mark(Function.prototype.toString, "function toString() { [native code] }");
 
-    // Ẩn dòng liên quan tới file này khỏi stack trace, tránh lộ ra
-    // trong console.error/exception mà game có thể log lại.
     const __sanitizeStack = (stackStr) => {
         if (!stackStr || typeof stackStr !== "string") return stackStr;
         return stackStr
@@ -528,9 +521,7 @@ window.addEventListener('message', (event) => {
             }
         });
         mark(Object.getOwnPropertyDescriptor, "function getOwnPropertyDescriptor() { [native code] }");
-    } catch (e) {
-        console.error('[Stealth Hook] Không thể ẩn stack trace:', e);
-    }
+    } catch {}
 
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
         const st = getState(this);
