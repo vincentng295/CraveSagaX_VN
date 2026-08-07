@@ -2,6 +2,7 @@ let is_translated = 1;
 let customTranslationDict = {};
 
 const TRANSLATED_MARKER = '\u200B';
+const TRANSLATED_MARKER_REGEX = /\u200B/g;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Thay đổi màu nền của trang web để phù hợp với chế độ tối
@@ -32,7 +33,7 @@ function isFragmentTranslated(fragmentText) {
 /** Bỏ hết marker trước khi hiển thị lên màn hình. */
 function stripMarkers(fragmentText) {
     if (typeof fragmentText !== 'string') return fragmentText;
-    return fragmentText.split(TRANSLATED_MARKER).join('');
+    return fragmentText.replace(TRANSLATED_MARKER_REGEX, '');
 }
 
 function extractTranslatedValue(entry) {
