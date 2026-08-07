@@ -293,7 +293,6 @@ window.addEventListener('message', (event) => {
     const originalResponseTextDesc = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'responseText');
     const originalResponseDesc = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'response');
 
-    const PREFIX = "https://nutaku-resource-en.cravesaga.johren.games/1.113.0/";
     const SUFFIX = ".txt";
 
     const stateMap = new WeakMap();
@@ -459,7 +458,7 @@ window.addEventListener('message', (event) => {
 
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
         const st = getState(this);
-        st.isStoryFile = typeof url === 'string' && url.startsWith(PREFIX) && url.endsWith(SUFFIX);
+        st.isStoryFile = typeof url === 'string' && url.endsWith(SUFFIX);
         if (st.isStoryFile) {
             // Lấy tên file .txt từ URL
             st.fileName = url.split('/').pop();
