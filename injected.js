@@ -1,8 +1,8 @@
 let is_translated = 1;
 let customTranslationDict = {};
 
-const TRANSLATED_MARKER = '\u200B';
-const TRANSLATED_MARKER_REGEX = /\u200B/g;
+const TRANSLATED_MARKER = '\uFEFF'; // Zero-width non-breaking space (U+FEFF)
+const TRANSLATED_MARKER_REGEX = /\uFEFF/g;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Thay đổi màu nền của trang web để phù hợp với chế độ tối
