@@ -14,6 +14,51 @@ function nextTranslationSeq() {
     return __translationSeqCounter;
 }
 
+/**
+ * Chèn TRANSLATED_MARKER xen kẽ giữa các từ/dấu câu trong chuỗi đã dịch,
+ * để cocos hook tìm marker gần nhất và biết dừng dịch tại đó.
+ * Ví dụ: "Dù sao thì, cứ đi về phía đông đi!"
+ *   -> "${MARKER}Dù${MARKER} ${MARKER}sao${MARKER} ${MARKER}thì${MARKER},${MARKER} ..."
+ */
+function interleaveMarkers(text) {
+    if (typeof text !== 'string' || !text) return text;
+ 
+    // Token = 1 escape sequence (\, \" ...) HOẶC 1 cụm chữ/số liên tiếp,
+    // HOẶC 1 ký tự dấu câu đơn lẻ, HOẶC 1 cụm khoảng trắng liên tiếp
+    const tokenRe = /\\.|[\p{L}\p{N}]+|[^\s\p{L}\p{N}]|\s+/gu;
+ 
+    let result = '';
+    let match;
+    while ((match = tokenRe.exec(text)) !== null) {
+        const token = match[0];
+        if (/^\s+$/.test(token) || token.charAt(0) === '\\') {
+            // Khoảng trắng hoặc escape sequence (\, \" ...): giữ nguyên,
+            // không bọc marker để tránh phá format CSV-like của story script
+            result += token;
+        } else {
+            result += TRANSLATED_MARKER + token + TRANSLATED_MARKER;
+        }
+    }
+ 
+    // Gộp marker liền kề (2 token sát nhau, không khoảng trắng) thành 1
+    const escaped = TRANSLATED_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return result.replace(new RegExp(`(?:${escaped}){2,}`, 'g'), TRANSLATED_MARKER);
+}
+
+/**
+ * Fragment (đoạn Cocos cắt ra từ câu gốc khi tách 2-3 dòng) có marker
+ * bên trong => coi như đã dịch, hook không dịch lại.
+ */
+function isFragmentTranslated(fragmentText) {
+    return typeof fragmentText === 'string' && fragmentText.indexOf(TRANSLATED_MARKER) !== -1;
+}
+
+/** Bỏ hết marker trước khi hiển thị lên màn hình. */
+function stripMarkers(fragmentText) {
+    if (typeof fragmentText !== 'string') return fragmentText;
+    return fragmentText.split(TRANSLATED_MARKER).join('');
+}
+
 function extractTranslatedValue(entry) {
     if (typeof entry === 'string') return entry;
     if (entry && typeof entry === 'object' && typeof entry.translated === 'string') return entry.translated;
@@ -246,8 +291,8 @@ window.addEventListener('message', (event) => {
             set: function (val) {
                 const labelInstance = this;
 
-                if (typeof val === 'string' && val.charAt(0) === TRANSLATED_MARKER) {
-                    const cleanVal = val.slice(TRANSLATED_MARKER.length);
+                if (isFragmentTranslated(val)) {
+                    const cleanVal = stripMarkers(val);
                     originalSet.call(this, cleanVal);
 
                     if (debounceMap.has(this)) {
@@ -323,13 +368,13 @@ window.addEventListener('message', (event) => {
             const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
             if (dictValue) {
                 const customResult = escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,');
-                return TRANSLATED_MARKER + customResult;
+                return interleaveMarkers(customResult);
             }
         }
 
         if (translateCache.has(cleanText)) {
             const cached = translateCache.get(cleanText);
-            return cached ? (TRANSLATED_MARKER + cached) : text;
+            return cached ? interleaveMarkers(cached) : text;
         }
 
         try {
@@ -353,7 +398,7 @@ window.addEventListener('message', (event) => {
                     seq
                 }, '*');
 
-                return TRANSLATED_MARKER + result; 
+                return interleaveMarkers(result); 
             }
         } catch (err) {
             console.error(`[Network Error] "${cleanText}":`, err);
