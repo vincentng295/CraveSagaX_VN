@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Crave Saga X Tiếng Việt",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Tự dịch hội thoại game Crave Saga X sang Tiếng Việt",
   "background": {
     "service_worker": "background.js"
