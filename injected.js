@@ -242,16 +242,18 @@ window.addEventListener('message', (event) => {
         function fixAndRewrap(labelInstance, text) {
             fixCocosFont(labelInstance);
 
-            labelInstance.enableWrapText = true;
-            if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = true;
-            originalSet.call(labelInstance, text);
-
+            // Không còn ctx/font đã đo (VD label chưa từng render lần nào) ->
+            // đành phải nhờ Cocos tự wrap 1 lần để hook measureText bắt được font.
             if (!lastMeasureCtx || !lastMeasureFont) {
-                if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
+                labelInstance.enableWrapText = true;
+                if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = true;
+                originalSet.call(labelInstance, text);
                 if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
                 return;
             }
 
+            // Có ctx/font cached rồi -> tính wrap luôn, KHÔNG set text thô trước
+            // (trước đây set 2 lần khiến Cocos layout 2 lần, gây khựng với câu 2-3 dòng)
             const safetyMargin = 8;
             const maxWidth = (labelInstance.node ? labelInstance.node.width : 650) - safetyMargin;
             const wrapped = wrapWithEngineMetrics(lastMeasureCtx, lastMeasureFont, text, maxWidth);
@@ -260,7 +262,8 @@ window.addEventListener('message', (event) => {
             if ('_enableWrapText' in labelInstance) labelInstance._enableWrapText = false;
             originalSet.call(labelInstance, wrapped);
 
-            if (typeof labelInstance._updateRenderData === 'function') labelInstance._updateRenderData(true);
+            // Không ép _updateRenderData(true) đồng bộ nữa - để engine tự cập nhật
+            // ở frame kế tiếp qua setVertsDirty(), tránh block main thread giữa frame.
             if (typeof labelInstance.setVertsDirty === 'function') labelInstance.setVertsDirty();
         }
 
