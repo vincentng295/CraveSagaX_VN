@@ -14,35 +14,11 @@ function nextTranslationSeq() {
     return __translationSeqCounter;
 }
 
-/**
- * Chèn TRANSLATED_MARKER xen kẽ giữa các từ/dấu câu trong chuỗi đã dịch,
- * để cocos hook tìm marker gần nhất và biết dừng dịch tại đó.
- * Ví dụ: "Dù sao thì, cứ đi về phía đông đi!"
- *   -> "${MARKER}Dù${MARKER} ${MARKER}sao${MARKER} ${MARKER}thì${MARKER},${MARKER} ..."
- */
 function interleaveMarkers(text) {
     if (typeof text !== 'string' || !text) return text;
- 
-    // Token = 1 escape sequence (\, \" ...) HOẶC 1 cụm chữ/số liên tiếp,
-    // HOẶC 1 ký tự dấu câu đơn lẻ, HOẶC 1 cụm khoảng trắng liên tiếp
-    const tokenRe = /\\.|[\p{L}\p{N}]+|[^\s\p{L}\p{N}]|\s+/gu;
- 
-    let result = '';
-    let match;
-    while ((match = tokenRe.exec(text)) !== null) {
-        const token = match[0];
-        if (/^\s+$/.test(token) || token.charAt(0) === '\\') {
-            // Khoảng trắng hoặc escape sequence (\, \" ...): giữ nguyên,
-            // không bọc marker để tránh phá format CSV-like của story script
-            result += token;
-        } else {
-            result += TRANSLATED_MARKER + token + TRANSLATED_MARKER;
-        }
-    }
- 
-    // Gộp marker liền kề (2 token sát nhau, không khoảng trắng) thành 1
-    const escaped = TRANSLATED_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return result.replace(new RegExp(`(?:${escaped}){2,}`, 'g'), TRANSLATED_MARKER);
+
+    // Bọc mọi chuỗi không chứa khoảng trắng ([^\s]+) bằng TRANSLATED_MARKER
+    return text.replace(/[^\s]+/g, TRANSLATED_MARKER + '$&' + TRANSLATED_MARKER);
 }
 
 /**
