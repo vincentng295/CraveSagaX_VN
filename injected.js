@@ -456,6 +456,60 @@ window.addEventListener('message', (event) => {
         return (await Promise.all(tasks)).join('\n');
     }
 
+    // =====================================================
+    // STEALTH HOOK — giả native code cho các hàm bị override
+    // để tránh game/engine tự kiểm tra toString()/descriptor
+    // phát hiện có script can thiệp vào XHR.
+    // =====================================================
+    const _nativeToString = Function.prototype.toString;
+    const __fakeNativeMap = new WeakMap();
+
+    function mark(fn, nativeSrc) {
+        if (typeof fn !== 'function') return fn;
+        __fakeNativeMap.set(fn, nativeSrc || `function ${fn.name || ''}() { [native code] }`);
+        return fn;
+    }
+
+    Function.prototype.toString = new Proxy(_nativeToString, {
+        apply(target, thisArg, args) {
+            if (__fakeNativeMap.has(thisArg)) {
+                return __fakeNativeMap.get(thisArg);
+            }
+            return Reflect.apply(target, thisArg, args);
+        }
+    });
+    mark(Function.prototype.toString, "function toString() { [native code] }");
+
+    // Ẩn dòng liên quan tới file này khỏi stack trace, tránh lộ ra
+    // trong console.error/exception mà game có thể log lại.
+    const __sanitizeStack = (stackStr) => {
+        if (!stackStr || typeof stackStr !== "string") return stackStr;
+        return stackStr
+            .split('\n')
+            .filter((line) => !line.includes('injected.js') && !line.includes('chrome-extension://'))
+            .join('\n');
+    };
+    try {
+        const _origGetOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+        Object.getOwnPropertyDescriptor = new Proxy(_origGetOwnPropertyDescriptor, {
+            apply(target, thisArg, args) {
+                const desc = Reflect.apply(target, thisArg, args);
+                if (args[1] === 'stack' && desc) {
+                    if (desc.get) {
+                        const origGet = desc.get;
+                        desc.get = function () { return __sanitizeStack(origGet.call(this)); };
+                    } else if ('value' in desc) {
+                        desc.value = __sanitizeStack(desc.value);
+                    }
+                }
+                return desc;
+            }
+        });
+        mark(Object.getOwnPropertyDescriptor, "function getOwnPropertyDescriptor() { [native code] }");
+    } catch (e) {
+        console.error('[Stealth Hook] Không thể ẩn stack trace:', e);
+    }
+
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
         const st = getState(this);
         st.isStoryFile = typeof url === 'string' && url.endsWith(SUFFIX);
@@ -465,6 +519,7 @@ window.addEventListener('message', (event) => {
         }
         return rawOpen.call(this, method, url, ...rest);
     };
+    mark(XMLHttpRequest.prototype.open, "function open() { [native code] }");
 
     Object.defineProperty(XMLHttpRequest.prototype, 'onload', {
         configurable: true,
@@ -486,6 +541,7 @@ window.addEventListener('message', (event) => {
         }
         return rawAddEventListener.call(this, type, listener, options);
     };
+    mark(XMLHttpRequest.prototype.addEventListener, "function addEventListener() { [native code] }");
 
     function dispatchRealEvent(xhr, evt) {
         const st = getState(xhr);
@@ -557,6 +613,7 @@ window.addEventListener('message', (event) => {
 
         return rawSend.call(this, body);
     };
+    mark(XMLHttpRequest.prototype.send, "function send() { [native code] }");
 
     Object.defineProperty(XMLHttpRequest.prototype, 'responseText', {
         configurable: true,
