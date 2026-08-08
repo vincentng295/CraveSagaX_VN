@@ -187,7 +187,16 @@ window.addEventListener('message', (event) => {
                 if (dictValue) return dictValue;
             }
 
-            if (translationCache.has(cleanText)) return translationCache.get(cleanText);
+            if (translationCache.has(cleanText)) {
+                const cachedTranslated = translationCache.get(cleanText);
+                window.postMessage({
+                    type: 'SAVE_NEW_TRANSLATION',
+                    original: cleanText,
+                    translated: cachedTranslated,
+                    seq
+                }, '*');
+                return cachedTranslated;
+            }
 
             try {
                 const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
@@ -354,7 +363,18 @@ window.addEventListener('message', (event) => {
 
         if (translateCache.has(cleanText)) {
             const cached = translateCache.get(cleanText);
-            return cached ? interleaveMarkers(cached) : text;
+            if (cached) {
+                window.postMessage({
+                    type: 'SAVE_NEW_TRANSLATION',
+                    original: cleanText,
+                    translated: cached,
+                    speaker: speakerName || undefined,
+                    chap: fileName || undefined,
+                    seq
+                }, '*');
+                return interleaveMarkers(cached);
+            }
+            return text;
         }
 
         try {
