@@ -30,12 +30,6 @@ function isFragmentTranslated(fragmentText) {
     return typeof fragmentText === 'string' && fragmentText.indexOf(TRANSLATED_MARKER) !== -1;
 }
 
-/** Bỏ hết marker trước khi hiển thị lên màn hình. */
-function stripMarkers(fragmentText) {
-    if (typeof fragmentText !== 'string') return fragmentText;
-    return fragmentText.replace(TRANSLATED_MARKER_REGEX, '');
-}
-
 function extractTranslatedValue(entry) {
     if (typeof entry === 'string') return entry;
     if (entry && typeof entry === 'object' && typeof entry.translated === 'string') return entry.translated;
@@ -281,14 +275,13 @@ window.addEventListener('message', (event) => {
                 const labelInstance = this;
 
                 if (isFragmentTranslated(val)) {
-                    const cleanVal = stripMarkers(val);
-                    originalSet.call(this, cleanVal);
+                    originalSet.call(this, val);
 
                     if (debounceMap.has(this)) {
                         clearTimeout(debounceMap.get(this));
                     }
                     debounceMap.set(this, setTimeout(() => {
-                        fixAndRewrap(labelInstance, cleanVal);
+                        fixAndRewrap(labelInstance, val);
                     }, 150));
                     return;
                 }
