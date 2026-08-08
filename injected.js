@@ -220,7 +220,9 @@ window.addEventListener('message', (event) => {
             }
         }
 
-        function fixCocosFont(label) {
+        // Chỉ ép font, không đụng tới overflow/width - áp dụng cho MỌI label,
+        // bất kể có phải dialog/đã dịch hay không, để đồng bộ font toàn game.
+        function forceArialFont(label) {
             try {
                 if ('useSystemFont' in label) label.useSystemFont = true;
                 if ('_isSystemFontUsed' in label) label._isSystemFontUsed = true;
@@ -229,6 +231,12 @@ window.addEventListener('message', (event) => {
                 if (label._font) label._font = null;
 
                 label.fontFamily = "Arial, sans-serif";
+            } catch (err) {}
+        }
+
+        function fixCocosFont(label) {
+            try {
+                forceArialFont(label);
 
                 if (cc.Label.Overflow) {
                     label.overflow = cc.Label.Overflow.RESIZE_HEIGHT;
@@ -273,6 +281,9 @@ window.addEventListener('message', (event) => {
         Object.defineProperty(proto, 'string', {
             set: function (val) {
                 const labelInstance = this;
+
+                // Ép font Arial cho MỌI label, không quan tâm có dịch/dialog hay không.
+                forceArialFont(labelInstance);
 
                 if (isFragmentTranslated(val)) {
                     originalSet.call(this, val);
