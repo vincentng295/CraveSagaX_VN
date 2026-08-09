@@ -65,54 +65,6 @@
     "time": 1785861610,
     "translated": "Defrecht"
   },
-  "Power": {
-    "name": null,
-    "seq": 1785861550076,
-    "time": 1785861616,
-    "translated": "Lực chiến"
-  },
-  "Power 1": {
-    "name": null,
-    "seq": 1785861550078,
-    "time": 1785861616,
-    "translated": "Lực chiến 1"
-  },
-  "Power 11010": {
-    "name": null,
-    "seq": 1785861550079,
-    "time": 1785861616,
-    "translated": "Lực chiến 11010"
-  },
-  "Power 10997": {
-    "name": null,
-    "seq": 1785861550080,
-    "time": 1785861616,
-    "translated": "Lực chiến 10997"
-  },
-  "Power 10968": {
-    "name": null,
-    "seq": 1785861550081,
-    "time": 1785861616,
-    "translated": "Lực chiến 10968"
-  },
-  "Power 10140": {
-    "name": null,
-    "seq": 1785861550082,
-    "time": 1785861616,
-    "translated": "Lực chiến 10140"
-  },
-  "Power 10799": {
-    "name": null,
-    "seq": 1785861550107,
-    "time": 1785861619,
-    "translated": "Lực chiến 10799"
-  },
-  "Power 1013": {
-    "name": null,
-    "seq": 1785861550139,
-    "time": 1785861619,
-    "translated": "Lực chiến 1013"
-  },
   "Exchange": {
     "name": null,
     "seq": 1785861550142,
@@ -2109,7 +2061,7 @@
     "name": null,
     "seq": 1785862622052,
     "time": 1785862693,
-    "translated": "đột kích"
+    "translated": "Đột kích"
   },
   "Voice": {
     "name": null,
@@ -95317,34 +95269,6 @@
     "time": 1786170289,
     "translated": "Cư dân C"
   },
-  "Power 11608": {
-    "chap": null,
-    "name": null,
-    "seq": 1786170029391,
-    "time": 1786172826,
-    "translated": "Nguồn 11608"
-  },
-  "Power 7775": {
-    "chap": null,
-    "name": null,
-    "seq": 1786170029393,
-    "time": 1786172826,
-    "translated": "Nguồn 7775"
-  },
-  "Power 7950": {
-    "chap": null,
-    "name": null,
-    "seq": 1786170029394,
-    "time": 1786172826,
-    "translated": "Nguồn 7950"
-  },
-  "Power 16089": {
-    "chap": null,
-    "name": null,
-    "seq": 1786170029395,
-    "time": 1786172826,
-    "translated": "Điện 16089"
-  },
   "Weekly": {
     "chap": null,
     "name": null,
@@ -127748,125 +127672,6 @@
     "time": 1786260026,
     "translated": "Vật phẩm nhận được từ Oceare Legends - Ánh sáng tỏa sáng vượt thời gian Phần thưởng đăng nhập. [Ngày 7]"
   },
-  "Power 11014": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981934,
-    "time": 1786260045,
-    "translated": "Điện 11014"
-  },
-  "Power 9617": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981939,
-    "time": 1786260045,
-    "translated": "Điện 9617"
-  },
-  "Power 9611": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981940,
-    "time": 1786260045,
-    "translated": "Điện 9611"
-  },
-  "Power 7965": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981941,
-    "time": 1786260045,
-    "translated": "Điện 7965"
-  },
-  "Power 7920": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981943,
-    "time": 1786260045,
-    "translated": "Nguồn 7920"
-  },
-  "Power 7790": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981944,
-    "time": 1786260045,
-    "translated": "Nguồn 7790"
-  },
-  "Power 7781": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981945,
-    "time": 1786260045,
-    "translated": "Nguồn 7781"
-  },
-  "Power 7779": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981946,
-    "time": 1786260045,
-    "translated": "Nguồn 7779"
-  },
-  "Power 7726": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981948,
-    "time": 1786260045,
-    "translated": "Nguồn 7726"
-  },
-  "Power 6946": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981949,
-    "time": 1786260045,
-    "translated": "Nguồn 6946"
-  },
-  "Power 5952": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981950,
-    "time": 1786260045,
-    "translated": "Nguồn 5952"
-  },
-  "Power 5106": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981951,
-    "time": 1786260045,
-    "translated": "Nguồn 5106"
-  },
-  "Power 5092": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981952,
-    "time": 1786260045,
-    "translated": "Nguồn 5092"
-  },
-  "Power 5090": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981953,
-    "time": 1786260045,
-    "translated": "Nguồn 5090"
-  },
-  "Power 5079": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981954,
-    "time": 1786260045,
-    "translated": "Nguồn 5079"
-  },
-  "Power 4568": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981955,
-    "time": 1786260045,
-    "translated": "Nguồn 4568"
-  },
-  "Power 4451": {
-    "chap": null,
-    "name": null,
-    "seq": 1786259981956,
-    "time": 1786260044,
-    "translated": "Nguồn 4451"
-  },
   "Bran": {
     "chap": null,
     "name": null,
@@ -127887,27 +127692,6 @@
     "seq": 1786266934793,
     "time": 1786267018,
     "translated": "Bên 3"
-  },
-  "Power 3484": {
-    "chap": null,
-    "name": null,
-    "seq": 1786266934798,
-    "time": 1786267019,
-    "translated": "Nguồn 3484"
-  },
-  "Power 519": {
-    "chap": null,
-    "name": null,
-    "seq": 1786266934799,
-    "time": 1786267019,
-    "translated": "Quyền lực 519"
-  },
-  "Power 449": {
-    "chap": null,
-    "name": null,
-    "seq": 1786266934800,
-    "time": 1786267019,
-    "translated": "Sức mạnh 449"
   },
   "Returning Together": {
     "chap": null,
