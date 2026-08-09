@@ -203,6 +203,80 @@ document.getElementById('btn-open-options')?.addEventListener('click', () => {
   chrome.tabs.create({ url: chrome.runtime.getURL('options.html') });
 });
 
+// ==== Đồng bộ bản dịch mới từ GitHub (remote pretranslated.json) ====
+const REMOTE_PRETRANSLATED_URL = 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/pretranslated.json';
+
+function getEntryValueForSync(entry) {
+    if (typeof entry === 'string') return entry;
+    if (entry && typeof entry === 'object') return entry.translated || '';
+    return '';
+}
+
+document.getElementById('btn-sync-remote')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const labelSpan = btn.querySelector('span');
+    const originalText = labelSpan.innerText;
+    btn.disabled = true;
+    labelSpan.innerText = '⏳ Đang đồng bộ...';
+
+    try {
+        const response = await fetch(REMOTE_PRETRANSLATED_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const remoteDict = await response.json();
+
+        if (typeof remoteDict !== 'object' || remoteDict === null || Array.isArray(remoteDict)) {
+            throw new Error('Dữ liệu remote không hợp lệ');
+        }
+
+        chrome.storage.local.get({ translationDict: {} }, (result) => {
+            const translationDict = result.translationDict || {};
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            Object.keys(remoteDict).forEach((key) => {
+                const remoteEntry = remoteDict[key];
+                const remoteTranslated = getEntryValueForSync(remoteEntry);
+                const existingEntry = translationDict[key];
+
+                if (!existingEntry) {
+                    translationDict[key] = (typeof remoteEntry === 'object' && remoteEntry !== null)
+                        ? { time: Math.floor(Date.now() / 1000), ...remoteEntry }
+                        : { translated: remoteTranslated, name: null, chap: null, time: Math.floor(Date.now() / 1000) };
+                    addedCount++;
+                    return;
+                }
+
+                const existingTranslated = getEntryValueForSync(existingEntry);
+                if ((!existingTranslated || !existingTranslated.trim()) && remoteTranslated && remoteTranslated.trim()) {
+                    if (typeof existingEntry === 'string') {
+                        translationDict[key] = { translated: remoteTranslated, name: null, chap: null, time: Math.floor(Date.now() / 1000) };
+                    } else {
+                        translationDict[key] = { ...existingEntry, translated: remoteTranslated };
+                    }
+                    updatedCount++;
+                }
+            });
+
+            chrome.storage.local.set({ translationDict }, () => {
+                labelSpan.innerText = '✓ Đã đồng bộ';
+                alert(`Đồng bộ thành công!\nThêm mới: ${addedCount} câu\nBổ sung bản dịch còn thiếu: ${updatedCount} câu`);
+                setTimeout(() => {
+                    labelSpan.innerText = originalText;
+                    btn.disabled = false;
+                }, 1500);
+            });
+        });
+    } catch (err) {
+        console.error('Lỗi khi đồng bộ pretranslated.json:', err);
+        labelSpan.innerText = '✗ Lỗi';
+        alert('Đồng bộ thất bại. Vui lòng kiểm tra kết nối mạng và thử lại.');
+        setTimeout(() => {
+            labelSpan.innerText = originalText;
+            btn.disabled = false;
+        }, 1500);
+    }
+});
+
 const qrImage = document.getElementById('donation-qr');
 if (qrImage) {
   qrImage.src = chrome.runtime.getURL('images/donation-qr.png');

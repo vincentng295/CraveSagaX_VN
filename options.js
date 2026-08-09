@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnImportTrigger = document.getElementById('btn-import-trigger');
     const fileImport = document.getElementById('file-import');
     const btnClearAll = document.getElementById('btn-clear-all');
+    const btnSyncRemote = document.getElementById('btn-sync-remote');
+
+    const REMOTE_PRETRANSLATED_URL = 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/pretranslated.json';
 
     let translationDict = {};
     let chapRemarks = {}; // Lưu Mapping: { "md5name.txt": "Tên Chap Gợi Nhớ" }
@@ -418,6 +421,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         alert(msg);
     });
+
+    if (btnSyncRemote) {
+        btnSyncRemote.addEventListener('click', async () => {
+            const originalLabel = btnSyncRemote.innerText;
+            btnSyncRemote.disabled = true;
+            btnSyncRemote.innerText = '⏳ Đang đồng bộ...';
+
+            try {
+                const response = await fetch(REMOTE_PRETRANSLATED_URL, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const remoteDict = await response.json();
+
+                if (typeof remoteDict !== 'object' || remoteDict === null || Array.isArray(remoteDict)) {
+                    throw new Error('Dữ liệu remote không hợp lệ');
+                }
+
+                let addedCount = 0;
+                let updatedCount = 0;
+
+                Object.keys(remoteDict).forEach((key) => {
+                    const remoteEntry = remoteDict[key];
+                    const remoteTranslated = getEntryValue(remoteEntry);
+                    const existingEntry = translationDict[key];
+
+                    if (!existingEntry) {
+                        translationDict[key] = (typeof remoteEntry === 'object' && remoteEntry !== null)
+                            ? { time: nowUnix(), ...remoteEntry }
+                            : { translated: remoteTranslated, name: null, chap: null, time: nowUnix() };
+                        addedCount++;
+                        return;
+                    }
+
+                    const existingTranslated = getEntryValue(existingEntry);
+                    if ((!existingTranslated || !existingTranslated.trim()) && remoteTranslated && remoteTranslated.trim()) {
+                        updateEntryTranslation(key, remoteTranslated);
+                        updatedCount++;
+                    }
+                });
+
+                migrateMissingTimes();
+                saveDictionary();
+                populateChapFilterOptions();
+                renderTable();
+
+                btnSyncRemote.innerText = '✓ Đã đồng bộ';
+                alert(`Đồng bộ thành công!\nThêm mới: ${addedCount} câu\nBổ sung bản dịch còn thiếu: ${updatedCount} câu`);
+            } catch (err) {
+                console.error('Lỗi khi đồng bộ pretranslated.json:', err);
+                btnSyncRemote.innerText = '✗ Lỗi';
+                alert('Đồng bộ thất bại. Vui lòng kiểm tra kết nối mạng và thử lại.');
+            } finally {
+                setTimeout(() => {
+                    btnSyncRemote.innerText = originalLabel;
+                    btnSyncRemote.disabled = false;
+                }, 1500);
+            }
+        });
+    }
 
     searchInput.addEventListener('input', () => renderTable());
     chapFilterSelect.addEventListener('change', () => renderTable());
