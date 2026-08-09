@@ -25,8 +25,8 @@
     "https://gi.nutaku.com/*",
     "https://*.nutaku.com/*",
     "https://*.ero-labs.com/*",
-    "https://d2z1bqkh6aowmt.cloudfront.net/client/*",
-    "https://d1njotu2ezlj2j.cloudfront.net/g/client/*",
+    "https://d1njotu2ezlj2j.cloudfront.net/*",
+    "https://d2z1bqkh6aowmt.cloudfront.net/*",
     "https://*.johren.net/*",
     "https://translate.googleapis.com/*",
     "https://raw.githubusercontent.com/*"
@@ -35,9 +35,9 @@
     {
       "matches": [
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
-        "https://www.johren.net/games/cravesaga-en/play/",
-        "https://d1njotu2ezlj2j.cloudfront.net/g/client/1.113.0/index_johren.html",
-        "https://d2z1bqkh6aowmt.cloudfront.net/client/1.113.0/index_erolabs.html?*"
+        "https://www.johren.net/games/cravesaga-en/play/*",
+        "https://d1njotu2ezlj2j.cloudfront.net/*",
+        "https://d2z1bqkh6aowmt.cloudfront.net/*"
       ],
       "js": ["content.js"],
       "all_frames": true,
@@ -46,9 +46,9 @@
     {
       "matches": [
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
-        "https://www.johren.net/games/cravesaga-en/play/",
-        "https://d1njotu2ezlj2j.cloudfront.net/g/client/1.113.0/index_johren.html",
-        "https://d2z1bqkh6aowmt.cloudfront.net/client/1.113.0/index_erolabs.html?*"
+        "https://www.johren.net/games/cravesaga-en/play/*",
+        "https://d1njotu2ezlj2j.cloudfront.net/*",
+        "https://d2z1bqkh6aowmt.cloudfront.net/*"
       ],
       "js": ["injected.js"],
       "all_frames": true,
