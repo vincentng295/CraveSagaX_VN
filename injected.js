@@ -201,21 +201,23 @@ window.addEventListener('message', (event) => {
 
                 translationCache.set(cleanText, translated);
 
+                /*
                 window.postMessage({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
                     translated: translated,
                     seq
-                }, '*');
+                }, '*');*/
 
                 return translated;
             } catch (e) {
+                /*
                 window.postMessage({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
                     translated: '',
                     seq
-                }, '*');
+                }, '*');*/
                 return null;
             }
         }
