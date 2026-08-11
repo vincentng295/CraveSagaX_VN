@@ -183,12 +183,6 @@ window.addEventListener('message', (event) => {
 
             if (translationCache.has(cleanText)) {
                 const cachedTranslated = translationCache.get(cleanText);
-                window.postMessage({
-                    type: 'SAVE_NEW_TRANSLATION',
-                    original: cleanText,
-                    translated: cachedTranslated,
-                    seq
-                }, '*');
                 return cachedTranslated;
             }
 
@@ -201,23 +195,8 @@ window.addEventListener('message', (event) => {
 
                 translationCache.set(cleanText, translated);
 
-                /*
-                window.postMessage({
-                    type: 'SAVE_NEW_TRANSLATION',
-                    original: cleanText,
-                    translated: translated,
-                    seq
-                }, '*');*/
-
                 return translated;
             } catch (e) {
-                /*
-                window.postMessage({
-                    type: 'SAVE_NEW_TRANSLATION',
-                    original: cleanText,
-                    translated: '',
-                    seq
-                }, '*');*/
                 return null;
             }
         }
