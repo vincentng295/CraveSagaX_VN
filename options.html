@@ -253,6 +253,8 @@
       <!-- Ô nhập remark cho chap đang được filter -->
       <input type="text" id="chap-remark-input" class="search-box" style="display: none; max-width: 220px;" placeholder="Đặt tên hiển thị (Remark)...">
 
+      <button class="btn btn-primary" id="btn-retranslate-gemma" style="display: none;">🤖 Dịch lại bằng Gemma (chap này)</button>
+
       <select id="sort-select" class="select-box">
         <option value="time-desc">Mới nhất trước</option>
         <option value="time-asc" selected>Cũ nhất trước</option>
@@ -260,6 +262,8 @@
       </select>
       <button class="btn btn-danger" id="btn-clear-all">Xóa tất cả</button>
     </div>
+
+    <div id="gemma-retranslate-status" style="display:none; font-size:13px; color:var(--text-muted); margin-bottom:12px;"></div>
 
     <table>
       <colgroup>

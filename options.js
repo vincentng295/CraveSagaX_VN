@@ -40,8 +40,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClearAll = document.getElementById('btn-clear-all');
     const btnSyncRemote = document.getElementById('btn-sync-remote');
     const loadMoreSentinel = document.getElementById('load-more-sentinel');
+    const btnRetranslateGemma = document.getElementById('btn-retranslate-gemma');
+    const gemmaRetranslateStatus = document.getElementById('gemma-retranslate-status');
 
     const REMOTE_PRETRANSLATED_URL = 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/pretranslated.json';
+
+    // ==== Dịch lại bằng Gemma (theo Chap đang filter) ====
+    // Options page chạy trong extension context (không phải MAIN world như injected.js)
+    // nên được hưởng CORS bypass từ host_permissions -> gọi fetch() trực tiếp tới
+    // generativelanguage.googleapis.com, không cần relay qua content.js.
+    const GEMINI_MODEL_ID = 'gemma-4-31b-it';
+    const GEMMA_RETRANSLATE_CHUNK_SIZE = 200;
+    const GEMINI_SYSTEM_INSTRUCTION = "Bạn là AI chuyên chỉnh sửa bản dịch game **Crave Saga** (có nội dung NSFW).\n" +
+        "Crave Saga X là tựa game nhập vai chiến thuật theo lượt (turn-based) dành cho người lớn (BL/yaoi), lấy bối cảnh tại Vesteria — một thế giới song song giả tưởng nơi chỉ có nam giới sinh sống, chịu sự chi phối giữa các thiên thần và ác quỷ. Người chơi vào vai \"Master\" thực hiện hành trình cứu thế giới. Vesteria là một thế giới song song độc nhất chỉ có các chàng trai thuộc nhiều chủng tộc khác nhau sinh sống. Nơi đây chịu sự kiểm soát của phe thiên thần (muốn dẫn dắt nhân loại đến utopia) và phe ác quỷ (thỏa mãn tham vọng và sự đồi trụy). Nhân vật chính được tái sinh tại Vesteria bởi Thần Sáng tạo và Vua Thần nguyên thủy Arche để bắt đầu hành trình phiêu lưu và cứu rỗi.\n" +
+        "Vesteria không có phụ nữ, chỉ có đàn ông.\n\n" +
+        "Nhiệm vụ của bạn:\n" +
+        "Nhận vào một mảng JSON các object {\"original\": \"...\", \"name\": \"...\"} — trong đó \"original\" là câu thoại tiếng Anh cần dịch, \"name\" là tên nhân vật đang nói câu đó (có thể null/rỗng nếu là dòng lựa chọn hoặc không xác định). " +
+        "Hãy DÙNG \"name\" để hiểu khẩu khí, giới tính, vai vế của nhân vật đó (đây là game BL toàn nam giới) rồi dịch \"original\" sang tiếng Việt tự nhiên, mượt mà, đúng ngữ cảnh game hơn.\n\n" +
+        "### Quy tắc bắt buộc\n" +
+        "- Ưu tiên tự nhiên, dễ đọc như người Việt viết, không máy móc.\n" +
+        "- Giữ đúng ý nghĩa gốc, không thêm bớt thông tin.\n" +
+        "- Với tên riêng, thuật ngữ game thì giữ nguyên hoặc dịch theo chuẩn game: Master → Master, Soulmate → Soulmate, Sacred → Sacred, Raid → Raid, Player Rank → Hạng người chơi / Rank, Login → Đăng nhập.\n" +
+        "- Các câu nhiệm vụ / thành tựu nên ngắn gọn, có cảm giác \"quest game\".\n" +
+        "- Các câu thoại thì giữ khẩu khí riêng của từng nhân vật (thân mật, thô, lịch sự…) dựa theo \"name\" đi kèm.\n\n" +
+        "### Phong cách\n" +
+        "- Tránh dịch word-by-word.\n" +
+        "- Tránh câu quá cứng hoặc quá \"Google dịch\".\n" +
+        "- Ưu tiên ngắn gọn, rõ ràng, tự nhiên.\n\n" +
+        "### Định dạng output\n" +
+        "Trả về ĐÚNG một JSON object dạng {\"response\": [{\"original\": \"...\", \"translated\": \"...\"}, ...]}, giữ nguyên từng \"original\" y hệt input (không đổi \"name\" ra output), điền \"translated\", không giải thích, không thêm text nào khác ngoài JSON.";
 
     let translationDict = {};
     let chapRemarks = {}; // Lưu Mapping: { "md5name.txt": "Tên Chap Gợi Nhớ" }
@@ -284,9 +311,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (filterChap) {
             chapRemarkInput.style.display = 'inline-block';
             chapRemarkInput.value = chapRemarks[filterChap] || '';
+            if (btnRetranslateGemma) btnRetranslateGemma.style.display = '';
         } else {
             chapRemarkInput.style.display = 'none';
             chapRemarkInput.value = '';
+            if (btnRetranslateGemma) btnRetranslateGemma.style.display = 'none';
         }
 
         const keys = sortKeys(Object.keys(translationDict));
@@ -368,6 +397,143 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function saveDictionary() {
         chrome.storage.local.set({ translationDict, chapRemarks });
+    }
+
+    function chunkArray(arr, size) {
+        const chunks = [];
+        for (let i = 0; i < arr.length; i += size) {
+            chunks.push(arr.slice(i, i + size));
+        }
+        return chunks;
+    }
+
+    // Gọi Gemma/Gemini API trực tiếp cho 1 lô câu thoại, trả về map { original: translated }.
+    async function callGemmaBatchDirect(items, apiKey) {
+        if (!items.length) return {};
+
+        const promptText = `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${JSON.stringify(items.map((it) => ({ original: it.text, name: it.speaker || null })))}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: promptText }] }],
+                generationConfig: {
+                    temperature: 0.35,
+                    responseMimeType: 'application/json',
+                    thinkingConfig: { thinkingLevel: 'MINIMAL' }
+                }
+            })
+        });
+
+        if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${errBody}`);
+        }
+
+        const data = await res.json();
+        const rawText = (data?.candidates?.[0]?.content?.parts || [])
+            .filter((p) => !p.thought)
+            .map((p) => p.text || '')
+            .join('') || '';
+
+        const jsonStart = rawText.indexOf('{');
+        const jsonEnd = rawText.lastIndexOf('}');
+        const jsonSlice = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart)
+            ? rawText.slice(jsonStart, jsonEnd + 1)
+            : rawText;
+
+        const parsed = JSON.parse(jsonSlice);
+        const responseItems = Array.isArray(parsed) ? parsed : (parsed.response || []);
+
+        const map = {};
+        responseItems.forEach((item) => {
+            if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
+                map[item.original] = item.translated;
+            }
+        });
+        return map;
+    }
+
+    // Dịch lại toàn bộ câu thoại đang hiển thị (theo Chap + tìm kiếm đang filter) bằng Gemma,
+    // ghi đè lên bản dịch cũ nếu Gemma trả về kết quả cho câu đó.
+    async function retranslateFilteredWithGemma() {
+        const filterChap = chapFilterSelect.value;
+        if (!filterChap) return;
+
+        const keys = Object.keys(currentFilteredDict);
+        if (keys.length === 0) {
+            alert('Không có câu thoại nào trong chap này để dịch lại.');
+            return;
+        }
+
+        const { geminiApiKey } = await new Promise((resolve) => {
+            chrome.storage.local.get({ geminiApiKey: '' }, resolve);
+        });
+
+        if (!geminiApiKey) {
+            alert('Vui lòng nhập Gemini API Key ở mục "Công cụ dịch" phía trên trước khi dịch lại bằng Gemma.');
+            return;
+        }
+
+        const chapLabel = chapRemarks[filterChap] || filterChap;
+        if (!confirm(`Dịch lại ${keys.length} câu thoại trong chap "${chapLabel}" bằng Gemma?\nBản dịch cũ (nếu có) sẽ bị ghi đè.`)) {
+            return;
+        }
+
+        const items = keys.map((key) => ({
+            key,
+            text: key,
+            speaker: getEntryName(currentFilteredDict[key])
+        }));
+        const chunks = chunkArray(items, GEMMA_RETRANSLATE_CHUNK_SIZE);
+
+        const originalLabel = btnRetranslateGemma.innerText;
+        btnRetranslateGemma.disabled = true;
+        gemmaRetranslateStatus.style.display = 'block';
+
+        let translatedCount = 0;
+        let failedChunks = 0;
+
+        for (let i = 0; i < chunks.length; i++) {
+            btnRetranslateGemma.innerText = `⏳ Đang dịch... (${i + 1}/${chunks.length} lô)`;
+            gemmaRetranslateStatus.innerText = `Đang gửi lô ${i + 1}/${chunks.length} (${chunks[i].length} câu) tới Gemma...`;
+
+            try {
+                const map = await callGemmaBatchDirect(chunks[i], geminiApiKey);
+                chunks[i].forEach((it) => {
+                    const translated = map[it.text];
+                    if (translated && translated.trim()) {
+                        updateEntryTranslation(it.key, translated.trim());
+                        translatedCount++;
+                    }
+                });
+                saveDictionary();
+            } catch (err) {
+                console.error('[Gemma] Lỗi khi dịch lại lô:', err);
+                failedChunks++;
+            }
+        }
+
+        btnRetranslateGemma.disabled = false;
+        btnRetranslateGemma.innerText = originalLabel;
+        gemmaRetranslateStatus.style.display = 'none';
+        gemmaRetranslateStatus.innerText = '';
+
+        renderTable();
+
+        let msg = `Đã dịch lại ${translatedCount}/${keys.length} câu bằng Gemma.`;
+        if (failedChunks > 0) {
+            msg += `\nCó ${failedChunks} lô bị lỗi (kiểm tra Console để biết chi tiết).`;
+        }
+        alert(msg);
+    }
+
+    if (btnRetranslateGemma) {
+        btnRetranslateGemma.addEventListener('click', () => {
+            retranslateFilteredWithGemma();
+        });
     }
 
     // Lắng nghe sự kiện lưu Remark khi nhập vào ô Chap Remark Input
