@@ -137,6 +137,46 @@ window.addEventListener('message', (event) => {
     }
 });
 
+// ==== Relay gọi Gemini/Gemma API thay cho injected.js ====
+// injected.js chạy ở MAIN world nên không có host_permissions bypass CORS.
+// content.js chạy ở isolated world nên fetch() ở đây mới gọi được thẳng tới
+// generativelanguage.googleapis.com mà không bị CORS chặn.
+window.addEventListener('message', async (event) => {
+    if (!event.data || event.data.type !== 'GEMMA_BATCH_REQUEST') return;
+
+    const { requestId, apiKey, modelId, promptText } = event.data;
+
+    if (!requestId) return;
+
+    if (!apiKey) {
+        window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, error: 'Thiếu API Key' }, '*');
+        return;
+    }
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: promptText }] }],
+                generationConfig: { temperature: 0.35, responseMimeType: 'application/json' }
+            })
+        });
+
+        if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${errBody}`);
+        }
+
+        const data = await res.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+        window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, rawText }, '*');
+    } catch (err) {
+        window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, error: err.message || String(err) }, '*');
+    }
+});
+
 // Lắng nghe sự kiện thay đổi storage từ Options hoặc Popup
 chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes.translationDict) {

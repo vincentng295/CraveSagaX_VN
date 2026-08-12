@@ -147,6 +147,49 @@ const GEMINI_SYSTEM_INSTRUCTION = "Bạn là AI chuyên chỉnh sửa bản dị
     "### Định dạng output\n" +
     "Trả về ĐÚNG một JSON object dạng {\"response\": [{\"original\": \"...\", \"translated\": \"...\"}, ...]}, giữ nguyên từng \"original\" y hệt input (không đổi \"name\" ra output), điền \"translated\", không giải thích, không thêm text nào khác ngoài JSON.";
 
+/**
+ * injected.js chạy ở MAIN world (như 1 script thường của trang game), nên KHÔNG
+ * được hưởng CORS bypass từ "host_permissions" khai báo trong manifest.json —
+ * quyền đó chỉ áp dụng cho code chạy ở isolated world (content script, background,
+ * popup/options). Vì vậy fetch() trực tiếp tới generativelanguage.googleapis.com
+ * từ đây sẽ bị trình duyệt chặn (CORS/CSP) và luôn báo lỗi "Failed to fetch".
+ *
+ * Giải pháp: gửi request qua postMessage sang content.js (isolated world), nhờ
+ * content.js gọi fetch() thật (được CORS bypass) rồi trả kết quả về bằng
+ * postMessage, giống cơ chế GAME_ENGINE_UPDATE / GAME_DICT_UPDATE đã có sẵn.
+ */
+let __gemmaReqCounter = 0;
+function requestGemmaBatchFromContentScript(promptText) {
+    return new Promise((resolve, reject) => {
+        const requestId = 'gemma_' + Date.now() + '_' + (++__gemmaReqCounter);
+
+        const timeoutId = setTimeout(() => {
+            window.removeEventListener('message', handler);
+            reject(new Error('Timeout chờ phản hồi từ content script (10 phút)'));
+        }, 600000);
+
+        function handler(event) {
+            if (!event.data || event.data.type !== 'GEMMA_BATCH_RESULT' || event.data.requestId !== requestId) return;
+            clearTimeout(timeoutId);
+            window.removeEventListener('message', handler);
+            if (event.data.error) {
+                reject(new Error(event.data.error));
+            } else {
+                resolve(event.data.rawText || '');
+            }
+        }
+
+        window.addEventListener('message', handler);
+        window.postMessage({
+            type: 'GEMMA_BATCH_REQUEST',
+            requestId,
+            apiKey: window.geminiApiKey,
+            modelId: GEMINI_MODEL_ID,
+            promptText
+        }, '*');
+    });
+}
+
 async function callGemmaBatch(uniqueItems) {
     if (!uniqueItems.length) return {};
     if (!window.geminiApiKey) {
@@ -159,31 +202,8 @@ async function callGemmaBatch(uniqueItems) {
     // và chỉ dùng responseMimeType để ép JSON, nếu không server trả lỗi 400.
     const promptText = `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${JSON.stringify(uniqueItems.map((it) => ({ original: it.text, name: it.speaker || null })))}`;
 
-    const body = {
-        contents: [{
-            role: 'user',
-            parts: [{ text: promptText }]
-        }],
-        generationConfig: {
-            temperature: 0.35,
-            responseMimeType: 'application/json'
-        }
-    };
-
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:generateContent?key=${encodeURIComponent(window.geminiApiKey)}`;
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        if (!res.ok) {
-            const errBody = await res.text().catch(() => '');
-            throw new Error(`HTTP ${res.status} ${errBody}`);
-        }
-        const data = await res.json();
-
-        const rawText = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+        const rawText = await requestGemmaBatchFromContentScript(promptText);
         const parsed = JSON.parse(rawText);
         const items = Array.isArray(parsed) ? parsed : (parsed.response || []);
 
