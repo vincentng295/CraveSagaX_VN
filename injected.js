@@ -3,6 +3,70 @@ let customTranslationDict = {};
 window.translateEngine = 'google'; // 'google' | 'gemma'
 window.geminiApiKey = '';
 
+/**
+ * ==== Toast báo trạng thái đang dịch bằng Gemma ====
+ * Chèn 1 overlay nhỏ đè lên canvas Cocos để người chơi biết đang gọi AI dịch theo lô.
+ */
+const GEMMA_TOAST_ID = '__gemma_translate_toast__';
+let gemmaToastActiveCount = 0;
+
+function ensureGemmaToastEl() {
+    let el = document.getElementById(GEMMA_TOAST_ID);
+    if (el) return el;
+
+    el = document.createElement('div');
+    el.id = GEMMA_TOAST_ID;
+    el.style.cssText = [
+        'position:fixed', 'top:12px', 'right:12px', 'z-index:2147483647',
+        'display:none', 'align-items:center', 'gap:8px',
+        'background:rgba(17,24,39,0.9)', 'color:#fff',
+        'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
+        'font-size:13px', 'font-weight:600', 'padding:8px 14px',
+        'border-radius:999px', 'box-shadow:0 4px 12px rgba(0,0,0,0.35)',
+        'pointer-events:none', 'transition:opacity .2s'
+    ].join(';');
+
+    const spinner = document.createElement('div');
+    spinner.style.cssText = [
+        'width:14px', 'height:14px', 'border-radius:50%',
+        'border:2px solid rgba(255,255,255,0.35)', 'border-top-color:#fff',
+        'animation:__gemma_spin__ .7s linear infinite', 'flex-shrink:0'
+    ].join(';');
+
+    const styleTag = document.createElement('style');
+    styleTag.textContent = '@keyframes __gemma_spin__{to{transform:rotate(360deg)}}';
+    document.head.appendChild(styleTag);
+
+    const label = document.createElement('span');
+    label.id = GEMMA_TOAST_ID + '_label';
+    label.textContent = 'Đang dịch bằng Gemma...';
+
+    el.appendChild(spinner);
+    el.appendChild(label);
+    document.body.appendChild(el);
+    return el;
+}
+
+function showGemmaToast(text) {
+    gemmaToastActiveCount++;
+    const el = ensureGemmaToastEl();
+    const label = document.getElementById(GEMMA_TOAST_ID + '_label');
+    if (label) label.textContent = text || 'Đang dịch bằng Gemma...';
+    el.style.display = 'flex';
+    el.style.opacity = '1';
+}
+
+function hideGemmaToast() {
+    gemmaToastActiveCount = Math.max(0, gemmaToastActiveCount - 1);
+    if (gemmaToastActiveCount > 0) return;
+    const el = document.getElementById(GEMMA_TOAST_ID);
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(() => {
+        if (gemmaToastActiveCount === 0) el.style.display = 'none';
+    }, 200);
+}
+
 const TRANSLATED_MARKER = '\uFEFF'; // Zero-width non-breaking space (U+FEFF)
 const TRANSLATED_MARKER_REGEX = /\uFEFF/g;
 
@@ -612,7 +676,16 @@ window.addEventListener('message', (event) => {
         if (window.translateEngine === 'gemma') {
             const uniqueItems = collectUntranslatedTexts(lines);
             console.log(`[Gemma] Gộp ${uniqueItems.length} câu chưa dịch của "${fileName || ''}" vào 1 request...`);
-            currentGemmaBatchResults = new Map(Object.entries(await callGemmaBatch(uniqueItems)));
+            if (uniqueItems.length > 0) {
+                showGemmaToast(`Đang dịch ${uniqueItems.length} câu bằng Gemma...`);
+                try {
+                    currentGemmaBatchResults = new Map(Object.entries(await callGemmaBatch(uniqueItems)));
+                } finally {
+                    hideGemmaToast();
+                }
+            } else {
+                currentGemmaBatchResults = new Map();
+            }
         } else {
             currentGemmaBatchResults = null;
         }
