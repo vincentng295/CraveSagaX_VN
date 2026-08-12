@@ -204,7 +204,17 @@ async function callGemmaBatch(uniqueItems) {
 
     try {
         const rawText = await requestGemmaBatchFromContentScript(promptText);
-        const parsed = JSON.parse(rawText);
+
+        // Phòng vệ thêm: dù đã tắt thinking + lọc "thought" part ở content.js,
+        // vẫn trích phần {...} ngoài cùng ra trước khi parse, để tránh vỡ nếu
+        // model lỡ chèn thêm text thừa trước/sau JSON.
+        const jsonStart = rawText.indexOf('{');
+        const jsonEnd = rawText.lastIndexOf('}');
+        const jsonSlice = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart)
+            ? rawText.slice(jsonStart, jsonEnd + 1)
+            : rawText;
+
+        const parsed = JSON.parse(jsonSlice);
         const items = Array.isArray(parsed) ? parsed : (parsed.response || []);
 
         const map = {};

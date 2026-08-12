@@ -160,7 +160,13 @@ window.addEventListener('message', async (event) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ role: 'user', parts: [{ text: promptText }] }],
-                generationConfig: { temperature: 0.35, responseMimeType: 'application/json' }
+                generationConfig: {
+                    temperature: 0.35,
+                    responseMimeType: 'application/json',
+                    thinkingConfig: {
+                        thinkingLevel: 'MINIMAL'
+                    }
+                }
             })
         });
 
@@ -170,7 +176,12 @@ window.addEventListener('message', async (event) => {
         }
 
         const data = await res.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+        // Phòng trường hợp thinkingBudget:0 không được model tôn trọng hoàn toàn,
+        // vẫn lọc bỏ mọi part có "thought": true trước khi ghép text lại.
+        const rawText = (data?.candidates?.[0]?.content?.parts || [])
+            .filter((p) => !p.thought)
+            .map((p) => p.text || '')
+            .join('') || '';
         window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, rawText }, '*');
     } catch (err) {
         window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, error: err.message || String(err) }, '*');
