@@ -67,6 +67,64 @@ function hideGemmaToast() {
     }, 200);
 }
 
+/**
+ * ==== Toast báo lỗi Gemma + fallback về Google Dịch ====
+ * Hiện riêng biệt với toast loading ở trên (màu đỏ, nằm ngay dưới), tự ẩn sau vài giây.
+ */
+const GEMMA_ERROR_TOAST_ID = '__gemma_error_toast__';
+let gemmaErrorToastHideTimeoutId = null;
+
+function ensureGemmaErrorToastEl() {
+    let el = document.getElementById(GEMMA_ERROR_TOAST_ID);
+    if (el) return el;
+
+    el = document.createElement('div');
+    el.id = GEMMA_ERROR_TOAST_ID;
+    el.style.cssText = [
+        'position:fixed', 'top:52px', 'right:12px', 'z-index:2147483647',
+        'max-width:320px',
+        'display:none', 'align-items:flex-start', 'gap:8px',
+        'background:rgba(220,38,38,0.95)', 'color:#fff',
+        'font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif',
+        'font-size:12px', 'font-weight:600', 'line-height:1.45', 'padding:10px 14px',
+        'border-radius:10px', 'box-shadow:0 4px 12px rgba(0,0,0,0.35)',
+        'pointer-events:none', 'transition:opacity .2s'
+    ].join(';');
+    document.body.appendChild(el);
+    return el;
+}
+
+function showGemmaErrorToast(text, durationMs = 6000) {
+    const el = ensureGemmaErrorToastEl();
+    el.textContent = `⚠️ ${text}`;
+    el.style.display = 'flex';
+    el.style.opacity = '1';
+
+    if (gemmaErrorToastHideTimeoutId) clearTimeout(gemmaErrorToastHideTimeoutId);
+    gemmaErrorToastHideTimeoutId = setTimeout(() => {
+        el.style.opacity = '0';
+        setTimeout(() => { el.style.display = 'none'; }, 200);
+    }, durationMs);
+}
+
+// Rút gọn message lỗi trả về từ Gemini API (thường là JSON {"error":{"message":"..."}})
+// thành 1 câu ngắn gọn, dễ đọc để hiển thị cho người dùng.
+function extractApiErrorMessage(rawMessage) {
+    if (!rawMessage) return 'Lỗi không xác định';
+    try {
+        const jsonStart = rawMessage.indexOf('{');
+        if (jsonStart !== -1) {
+            const parsed = JSON.parse(rawMessage.slice(jsonStart));
+            if (parsed && parsed.error && parsed.error.message) {
+                return parsed.error.message;
+            }
+        }
+    } catch (e) {
+        // rawMessage không phải JSON, dùng nguyên văn bên dưới
+    }
+    return rawMessage.length > 200 ? rawMessage.slice(0, 200) + '...' : rawMessage;
+}
+
 const TRANSLATED_MARKER = '\uFEFF'; // Zero-width non-breaking space (U+FEFF)
 const TRANSLATED_MARKER_REGEX = /\uFEFF/g;
 
@@ -226,7 +284,10 @@ async function callGemmaBatch(uniqueItems) {
         return map;
     } catch (err) {
         console.error('[Gemma] Lỗi khi dịch theo lô:', err);
-        return {};
+        // Ném lại lỗi để nơi gọi (processStoryScript) biết và hiển thị thông báo
+        // cho người dùng, thay vì âm thầm trả về {} khiến người chơi không hay biết
+        // là đang bị fallback sang Google Dịch.
+        throw err;
     }
 }
 
@@ -710,6 +771,14 @@ window.addEventListener('message', (event) => {
                 showGemmaToast(`Đang dịch ${uniqueItems.length} câu bằng Gemma...`);
                 try {
                     currentGemmaBatchResults = new Map(Object.entries(await callGemmaBatch(uniqueItems)));
+                } catch (err) {
+                    // Gemma lỗi (vd: 503 quá tải) -> báo cho người chơi biết và tự động
+                    // fallback về Google Dịch cho các câu của file này (Map rỗng khiến
+                    // translateSingleText() rơi xuống nhánh Google Dịch bên dưới).
+                    currentGemmaBatchResults = new Map();
+                    showGemmaErrorToast(
+                        `Gemma lỗi: ${extractApiErrorMessage(err.message)}. Đang chuyển tạm sang Google Dịch...`
+                    );
                 } finally {
                     hideGemmaToast();
                 }
