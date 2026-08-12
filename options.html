@@ -244,7 +244,8 @@
     </div>
 
     <div class="toolbar">
-      <input type="text" id="search-input" class="search-box" placeholder="Tìm kiếm câu thoại gốc hoặc bản dịch...">
+      <input type="text" id="search-input" class="search-box" placeholder="Tìm kiếm câu thoại gốc hoặc bản dịch... (Nhấn Enter hoặc bấm Tìm)">
+      <button class="btn btn-primary" id="btn-search">🔍 Tìm</button>
       <select id="chap-filter-select" class="select-box">
         <option value="">Tất cả Chap/File</option>
       </select>
@@ -283,6 +284,10 @@
         <!-- Dữ liệu render dynamic -->
       </tbody>
     </table>
+
+    <div id="load-more-sentinel" style="text-align:center; padding:12px; font-size:13px; color:var(--text-muted); display:none;">
+      Đang tải thêm...
+    </div>
 
     <div class="status-bar">
       <span id="total-count">Tổng số câu: 0</span>

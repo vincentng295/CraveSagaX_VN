@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tableBody = document.getElementById('dict-table-body');
     const searchInput = document.getElementById('search-input');
+    const btnSearch = document.getElementById('btn-search');
     const chapFilterSelect = document.getElementById('chap-filter-select');
     const chapRemarkInput = document.getElementById('chap-remark-input');
     const totalCountEl = document.getElementById('total-count');
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileImport = document.getElementById('file-import');
     const btnClearAll = document.getElementById('btn-clear-all');
     const btnSyncRemote = document.getElementById('btn-sync-remote');
+    const loadMoreSentinel = document.getElementById('load-more-sentinel');
 
     const REMOTE_PRETRANSLATED_URL = 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/pretranslated.json';
 
@@ -45,6 +47,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let chapRemarks = {}; // Lưu Mapping: { "md5name.txt": "Tên Chap Gợi Nhớ" }
     let currentFilteredDict = {};
     let sortMode = 'time-asc';
+
+    // ==== Lazy load (phân trang khi cuộn) ====
+    const PAGE_SIZE = 100;
+    let appliedFilterText = ''; // Chỉ áp dụng khi bấm nút Tìm / Enter, không lọc live theo từng ký tự gõ
+    let filteredKeys = [];
+    let renderedCount = 0;
+
+    const lazyLoadObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting && renderedCount < filteredKeys.length) {
+                renderNextBatch();
+            }
+        });
+    }, { root: null, rootMargin: '200px', threshold: 0 });
+
+    if (loadMoreSentinel) {
+        lazyLoadObserver.observe(loadMoreSentinel);
+    }
 
     function getEntryValue(entry) {
         if (typeof entry === 'string') return entry;
@@ -205,8 +225,59 @@ document.addEventListener('DOMContentLoaded', () => {
         return sorted;
     }
 
+    function buildRowHtml(key, entry) {
+        const value = getEntryValue(entry);
+        const speakerName = getEntryName(entry);
+        const chapName = getEntryChap(entry);
+        const entryTime = getEntryTime(entry);
+
+        // Ưu tiên hiển thị Remark nếu có ở cột Chap/File
+        const displayChapBadge = chapName
+            ? `<span class="chap-badge" title="${escapeHtml(chapName)}">${escapeHtml(chapRemarks[chapName] || chapName)}</span>`
+            : '<span class="speaker-none">—</span>';
+
+        return `
+            <td>${displayChapBadge}</td>
+            <td>${speakerName ? `<span class="speaker-badge">${escapeHtml(speakerName)}</span>` : '<span class="speaker-none">—</span>'}</td>
+            <td><strong>${escapeHtml(key)}</strong></td>
+            <td class="cell-textarea">
+                <textarea class="input-edit" data-key="${escapeHtml(key)}" rows="1">${escapeHtml(value)}</textarea>
+            </td>
+            <td><span class="time-cell">${escapeHtml(formatTime(entryTime))}</span></td>
+            <td>
+                <div class="actions">
+                    <button class="btn btn-primary btn-save" data-key="${escapeHtml(key)}">Lưu</button>
+                    <button class="btn btn-danger btn-delete" data-key="${escapeHtml(key)}">Xóa</button>
+                </div>
+            </td>
+        `;
+    }
+
+    // Chỉ render thêm 1 "trang" (PAGE_SIZE dòng) tiếp theo vào bảng, thay vì render toàn bộ.
+    // Được gọi lần đầu bởi renderTable(), sau đó tự động gọi tiếp khi người dùng cuộn tới sentinel.
+    function renderNextBatch() {
+        const nextKeys = filteredKeys.slice(renderedCount, renderedCount + PAGE_SIZE);
+        const fragment = document.createDocumentFragment();
+
+        nextKeys.forEach((key) => {
+            const entry = translationDict[key];
+            const tr = document.createElement('tr');
+            tr.innerHTML = buildRowHtml(key, entry);
+            fragment.appendChild(tr);
+        });
+
+        tableBody.appendChild(fragment);
+        renderedCount += nextKeys.length;
+
+        totalCountEl.innerText = `Hiển thị: ${renderedCount} / ${filteredKeys.length} câu`;
+
+        if (loadMoreSentinel) {
+            loadMoreSentinel.style.display = renderedCount < filteredKeys.length ? 'block' : 'none';
+        }
+    }
+
+    // Tính lại danh sách key thỏa điều kiện lọc, reset phân trang và render trang đầu tiên.
     function renderTable() {
-        const filterText = searchInput.value.trim().toLowerCase();
         const filterChap = chapFilterSelect.value;
 
         // Xử lý ẩn/hiện và nạp giá trị cho Ô Remark khi chọn 1 Chap cụ thể
@@ -218,97 +289,82 @@ document.addEventListener('DOMContentLoaded', () => {
             chapRemarkInput.value = '';
         }
 
-        tableBody.innerHTML = '';
         const keys = sortKeys(Object.keys(translationDict));
-        let count = 0;
-        currentFilteredDict = {}; // Xóa và cấp lại danh sách lọc
+        currentFilteredDict = {}; // Xóa và cấp lại danh sách lọc (dùng cho Export)
 
-        keys.forEach((key) => {
+        filteredKeys = keys.filter((key) => {
             const entry = translationDict[key];
             const value = getEntryValue(entry);
             const speakerName = getEntryName(entry);
             const chapName = getEntryChap(entry);
-            const entryTime = getEntryTime(entry);
 
-            // Điều kiện lọc
-            if (filterChap && chapName !== filterChap) return;
-            if (filterText && !key.toLowerCase().includes(filterText) && !value.toLowerCase().includes(filterText) && !speakerName.toLowerCase().includes(filterText)) {
-                return;
+            if (filterChap && chapName !== filterChap) return false;
+            if (appliedFilterText
+                && !key.toLowerCase().includes(appliedFilterText)
+                && !value.toLowerCase().includes(appliedFilterText)
+                && !speakerName.toLowerCase().includes(appliedFilterText)) {
+                return false;
             }
 
-            // Lưu câu hợp lệ vào filtered object
             currentFilteredDict[key] = entry;
-            count++;
-
-            // Ưu tiên hiển thị Remark nếu có ở cột Chap/File
-            const displayChapBadge = chapName 
-                ? `<span class="chap-badge" title="${escapeHtml(chapName)}">${escapeHtml(chapRemarks[chapName] || chapName)}</span>` 
-                : '<span class="speaker-none">—</span>';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${displayChapBadge}</td>
-                <td>${speakerName ? `<span class="speaker-badge">${escapeHtml(speakerName)}</span>` : '<span class="speaker-none">—</span>'}</td>
-                <td><strong>${escapeHtml(key)}</strong></td>
-                <td class="cell-textarea">
-                    <textarea class="input-edit" data-key="${escapeHtml(key)}" rows="1">${escapeHtml(value)}</textarea>
-                </td>
-                <td><span class="time-cell">${escapeHtml(formatTime(entryTime))}</span></td>
-                <td>
-                    <div class="actions">
-                        <button class="btn btn-primary btn-save" data-key="${escapeHtml(key)}">Lưu</button>
-                        <button class="btn btn-danger btn-delete" data-key="${escapeHtml(key)}">Xóa</button>
-                    </div>
-                </td>
-            `;
-
-            tableBody.appendChild(tr);
+            return true;
         });
 
-        totalCountEl.innerText = `Hiển thị: ${count} / ${keys.length} câu`;
-
-        document.querySelectorAll('.input-edit').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const origKey = e.target.getAttribute('data-key');
-                const newVal = e.target.value.trim();
-                if (newVal) {
-                    updateEntryTranslation(origKey, newVal);
-                    saveDictionary();
-                }
-            });
-        });
-
-        document.querySelectorAll('.btn-save').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const key = e.target.getAttribute('data-key');
-                const row = e.target.closest('tr');
-                const input = row.querySelector('.input-edit');
-                const newVal = input.value.trim();
-                if (!newVal) return;
-
-                updateEntryTranslation(key, newVal);
-                saveDictionary();
-
-                const originalLabel = e.target.innerText;
-                e.target.innerText = '✓ Đã lưu';
-                e.target.classList.add('saved');
-                setTimeout(() => {
-                    e.target.innerText = originalLabel;
-                    e.target.classList.remove('saved');
-                }, 1200);
-            });
-        });
-
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const targetKey = e.target.getAttribute('data-key');
-                delete translationDict[targetKey];
-                saveDictionary();
-                populateChapFilterOptions();
-                renderTable();
-            });
-        });
+        tableBody.innerHTML = '';
+        renderedCount = 0;
+        renderNextBatch();
     }
+
+    // Áp dụng ô tìm kiếm: chỉ lọc khi bấm nút Tìm hoặc nhấn Enter, không lọc live theo từng ký tự gõ.
+    function applySearchFilter() {
+        appliedFilterText = searchInput.value.trim().toLowerCase();
+        renderTable();
+    }
+
+    // Event delegation cho các thao tác trong bảng (sửa/lưu/xóa) — gắn 1 lần duy nhất,
+    // hoạt động với mọi dòng kể cả những dòng được lazy-load thêm sau này.
+    tableBody.addEventListener('change', (e) => {
+        const input = e.target.closest('.input-edit');
+        if (!input) return;
+        const origKey = input.getAttribute('data-key');
+        const newVal = input.value.trim();
+        if (newVal) {
+            updateEntryTranslation(origKey, newVal);
+            saveDictionary();
+        }
+    });
+
+    tableBody.addEventListener('click', (e) => {
+        const saveBtn = e.target.closest('.btn-save');
+        if (saveBtn) {
+            const key = saveBtn.getAttribute('data-key');
+            const row = saveBtn.closest('tr');
+            const input = row.querySelector('.input-edit');
+            const newVal = input.value.trim();
+            if (!newVal) return;
+
+            updateEntryTranslation(key, newVal);
+            saveDictionary();
+
+            const originalLabel = saveBtn.innerText;
+            saveBtn.innerText = '✓ Đã lưu';
+            saveBtn.classList.add('saved');
+            setTimeout(() => {
+                saveBtn.innerText = originalLabel;
+                saveBtn.classList.remove('saved');
+            }, 1200);
+            return;
+        }
+
+        const deleteBtn = e.target.closest('.btn-delete');
+        if (deleteBtn) {
+            const targetKey = deleteBtn.getAttribute('data-key');
+            delete translationDict[targetKey];
+            saveDictionary();
+            populateChapFilterOptions();
+            renderTable();
+        }
+    });
 
     function saveDictionary() {
         chrome.storage.local.set({ translationDict, chapRemarks });
@@ -480,7 +536,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    searchInput.addEventListener('input', () => renderTable());
+    if (btnSearch) {
+        btnSearch.addEventListener('click', () => applySearchFilter());
+    }
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applySearchFilter();
+        }
+    });
     chapFilterSelect.addEventListener('change', () => renderTable());
 
     const sortSelect = document.getElementById('sort-select');
