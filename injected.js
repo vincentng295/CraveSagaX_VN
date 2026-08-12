@@ -1,5 +1,7 @@
 let is_translated = 1;
 let customTranslationDict = {};
+window.translateEngine = 'google'; // 'google' | 'gemma'
+window.geminiApiKey = '';
 
 const TRANSLATED_MARKER = '\uFEFF'; // Zero-width non-breaking space (U+FEFF)
 const TRANSLATED_MARKER_REGEX = /\uFEFF/g;
@@ -48,6 +50,91 @@ window.addEventListener('message', (event) => {
         window.is_translated = event.data.enabled ? 1 : 0;
     }
 });
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'GAME_ENGINE_UPDATE') {
+        window.translateEngine = event.data.engine === 'gemma' ? 'gemma' : 'google';
+        window.geminiApiKey = event.data.apiKey || '';
+    }
+});
+
+/**
+ * ==== Gemma / Gemini batch translation ====
+ * Khác với Google Dịch (free, dịch được từng câu một mà không tốn kém),
+ * Gemma tính theo request nên phải GỘP nhiều câu vào 1 JSON rồi gọi 1 lần duy nhất.
+ */
+const GEMINI_MODEL_ID = 'gemma-4-31b-it';
+const GEMINI_SYSTEM_INSTRUCTION = "Bạn là AI chuyên chỉnh sửa bản dịch game **Crave Saga** (có nội dung NSFW).\n" +
+    "Crave Saga X là tựa game nhập vai chiến thuật theo lượt (turn-based) dành cho người lớn (BL/yaoi), lấy bối cảnh tại Vesteria — một thế giới song song giả tưởng nơi chỉ có nam giới sinh sống, chịu sự chi phối giữa các thiên thần và ác quỷ. Người chơi vào vai \"Master\" thực hiện hành trình cứu thế giới. Vesteria là một thế giới song song độc nhất chỉ có các chàng trai thuộc nhiều chủng tộc khác nhau sinh sống. Nơi đây chịu sự kiểm soát của phe thiên thần (muốn dẫn dắt nhân loại đến utopia) và phe ác quỷ (thỏa mãn tham vọng và sự đồi trụy). Nhân vật chính được tái sinh tại Vesteria bởi Thần Sáng tạo và Vua Thần nguyên thủy Arche để bắt đầu hành trình phiêu lưu và cứu rỗi.\n" +
+    "Vesteria không có phụ nữ, chỉ có đàn ông.\n\n" +
+    "Nhiệm vụ của bạn:\n" +
+    "Nhận vào một mảng JSON các object {\"original\": \"...\", \"name\": \"...\"} — trong đó \"original\" là câu thoại tiếng Anh cần dịch, \"name\" là tên nhân vật đang nói câu đó (có thể null/rỗng nếu là dòng lựa chọn hoặc không xác định). " +
+    "Hãy DÙNG \"name\" để hiểu khẩu khí, giới tính, vai vế của nhân vật đó (đây là game BL toàn nam giới) rồi dịch \"original\" sang tiếng Việt tự nhiên, mượt mà, đúng ngữ cảnh game hơn.\n\n" +
+    "### Quy tắc bắt buộc\n" +
+    "- Ưu tiên tự nhiên, dễ đọc như người Việt viết, không máy móc.\n" +
+    "- Giữ đúng ý nghĩa gốc, không thêm bớt thông tin.\n" +
+    "- Với tên riêng, thuật ngữ game thì giữ nguyên hoặc dịch theo chuẩn game: Master → Master, Soulmate → Soulmate, Sacred → Sacred, Raid → Raid, Player Rank → Hạng người chơi / Rank, Login → Đăng nhập.\n" +
+    "- Các câu nhiệm vụ / thành tựu nên ngắn gọn, có cảm giác \"quest game\".\n" +
+    "- Các câu thoại thì giữ khẩu khí riêng của từng nhân vật (thân mật, thô, lịch sự…) dựa theo \"name\" đi kèm.\n\n" +
+    "### Phong cách\n" +
+    "- Tránh dịch word-by-word.\n" +
+    "- Tránh câu quá cứng hoặc quá \"Google dịch\".\n" +
+    "- Ưu tiên ngắn gọn, rõ ràng, tự nhiên.\n\n" +
+    "### Định dạng output\n" +
+    "Trả về ĐÚNG một JSON object dạng {\"response\": [{\"original\": \"...\", \"translated\": \"...\"}, ...]}, giữ nguyên từng \"original\" y hệt input (không đổi \"name\" ra output), điền \"translated\", không giải thích, không thêm text nào khác ngoài JSON.";
+
+async function callGemmaBatch(uniqueItems) {
+    if (!uniqueItems.length) return {};
+    if (!window.geminiApiKey) {
+        console.warn('[Gemma] Thiếu API Key, bỏ qua dịch lô.');
+        return {};
+    }
+
+    // Lưu ý: model Gemma (khác Gemini) trên generativelanguage API KHÔNG hỗ trợ
+    // "systemInstruction" và "responseSchema" -> phải gộp instruction vào prompt
+    // và chỉ dùng responseMimeType để ép JSON, nếu không server trả lỗi 400.
+    const promptText = `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${JSON.stringify(uniqueItems.map((it) => ({ original: it.text, name: it.speaker || null })))}`;
+
+    const body = {
+        contents: [{
+            role: 'user',
+            parts: [{ text: promptText }]
+        }],
+        generationConfig: {
+            temperature: 0.35,
+            responseMimeType: 'application/json'
+        }
+    };
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:generateContent?key=${encodeURIComponent(window.geminiApiKey)}`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+            const errBody = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${errBody}`);
+        }
+        const data = await res.json();
+
+        const rawText = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+        const parsed = JSON.parse(rawText);
+        const items = Array.isArray(parsed) ? parsed : (parsed.response || []);
+
+        const map = {};
+        items.forEach((item) => {
+            if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
+                map[item.original] = item.translated;
+            }
+        });
+        return map;
+    } catch (err) {
+        console.error('[Gemma] Lỗi khi dịch theo lô:', err);
+        return {};
+    }
+}
 
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
@@ -186,6 +273,8 @@ window.addEventListener('message', (event) => {
                 return cachedTranslated;
             }
 
+            // Live label (Cocos) luôn dùng Google Dịch, kể cả khi engine = Gemma —
+            // chỉ phần dịch theo file (XHR hook) mới gộp lô gửi Gemma.
             try {
                 const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=vi&dt=t&q=${encodeURIComponent(cleanText)}`;
                 const res = await fetch(url);
@@ -332,6 +421,8 @@ window.addEventListener('message', (event) => {
     }
 
     const translateCache = new Map();
+    // Kết quả dịch theo lô (Gemma) của file story script hiện đang xử lý.
+    let currentGemmaBatchResults = null;
 
     async function translateSingleText(text, speakerName = null, fileName = null) {
         if (!text || !text.trim()) return text;
@@ -343,6 +434,23 @@ window.addEventListener('message', (event) => {
             if (dictValue) {
                 const customResult = escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,');
                 return interleaveMarkers(customResult);
+            }
+        }
+
+        if (window.translateEngine === 'gemma' && currentGemmaBatchResults && currentGemmaBatchResults.has(cleanText)) {
+            const translated = currentGemmaBatchResults.get(cleanText);
+            if (translated) {
+                const result = escapeUnescapedQuotes(translated).replace(/,/g, '\\,');
+                translateCache.set(cleanText, result);
+                window.postMessage({
+                    type: 'SAVE_NEW_TRANSLATION',
+                    original: cleanText,
+                    translated,
+                    speaker: speakerName || undefined,
+                    chap: fileName || undefined,
+                    seq
+                }, '*');
+                return interleaveMarkers(result);
             }
         }
 
@@ -457,9 +565,57 @@ window.addEventListener('message', (event) => {
         });
     }
 
+    // Duyệt file 1 lượt để thu thập MỌI câu cần dịch (msg + các field của select)
+    // chưa có trong customTranslationDict/translateCache, để gộp thành 1 request Gemma.
+    // Mỗi câu msg được đính kèm tên nhân vật (name,) đứng trước nó để Gemma hiểu ngữ cảnh.
+    function collectUntranslatedTexts(lines) {
+        const collectedMap = new Map(); // cleanText -> speaker
+        let speakerForCollect = null;
+
+        function needsTranslation(rawField) {
+            const cleanText = rawField.replace(/\\,/g, ',');
+            if (!cleanText.trim()) return null;
+            if (window.customTranslationDict && window.customTranslationDict[cleanText]) return null;
+            if (translateCache.has(cleanText)) return null;
+            return cleanText;
+        }
+
+        lines.forEach((line) => {
+            if (line.startsWith('name,')) {
+                speakerForCollect = extractSpeakerName(line);
+            } else if (line.startsWith('msg,')) {
+                const match = line.match(MSG_LINE_REGEX);
+                if (!match || !match[2] || !match[2].trim()) return;
+                const cleanText = needsTranslation(match[2]);
+                if (cleanText && !collectedMap.has(cleanText)) {
+                    collectedMap.set(cleanText, speakerForCollect);
+                }
+            } else if (line.startsWith('select,')) {
+                const fields = splitUnescapedComma(line);
+                fields.forEach((field, idx) => {
+                    if (idx === 0 || !field.trim()) return;
+                    const cleanText = needsTranslation(field);
+                    if (cleanText && !collectedMap.has(cleanText)) {
+                        collectedMap.set(cleanText, null); // dòng lựa chọn không gắn với 1 nhân vật cụ thể
+                    }
+                });
+            }
+        });
+
+        return Array.from(collectedMap.entries()).map(([text, speaker]) => ({ text, speaker }));
+    }
+
     async function processStoryScript(rawScript, fileName = null) {
         const lines = rawScript.split('\n');
         let currentSpeaker = null;
+
+        if (window.translateEngine === 'gemma') {
+            const uniqueItems = collectUntranslatedTexts(lines);
+            console.log(`[Gemma] Gộp ${uniqueItems.length} câu chưa dịch của "${fileName || ''}" vào 1 request...`);
+            currentGemmaBatchResults = new Map(Object.entries(await callGemmaBatch(uniqueItems)));
+        } else {
+            currentGemmaBatchResults = null;
+        }
 
         const tasks = lines.map(async (line) => {
             if (line.startsWith('name,')) {

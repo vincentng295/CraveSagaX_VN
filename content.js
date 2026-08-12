@@ -10,6 +10,23 @@ chrome.runtime.onMessage.addListener((message) => {
     }
 });
 
+// Đọc/đồng bộ cấu hình công cụ dịch (Google Dịch hoặc Gemma/Gemini API) vào main world
+function syncEngineSettings(engine, apiKey) {
+    window.postMessage({ type: 'GAME_ENGINE_UPDATE', engine: engine || 'google', apiKey: apiKey || '' }, '*');
+}
+
+chrome.storage.local.get({ translateEngine: 'google', geminiApiKey: '' }, (result) => {
+    syncEngineSettings(result.translateEngine, result.geminiApiKey);
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && (changes.translateEngine || changes.geminiApiKey)) {
+        chrome.storage.local.get({ translateEngine: 'google', geminiApiKey: '' }, (result) => {
+            syncEngineSettings(result.translateEngine, result.geminiApiKey);
+        });
+    }
+});
+
 let localDictCache = {};
 let isDictLoaded = false;
 let pendingQueue = [];

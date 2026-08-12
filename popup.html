@@ -276,6 +276,62 @@
       color: var(--text-muted);
       font-style: italic;
     }
+
+    /* Engine selector */
+    .engine-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .engine-select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px;
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--bg-input);
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+    .engine-key-row {
+      display: flex;
+      gap: 6px;
+    }
+    .engine-key-input {
+      flex: 1;
+      min-width: 0;
+      padding: 7px 10px;
+      border: 1px solid var(--border-input);
+      border-radius: 6px;
+      font-size: 13px;
+      box-sizing: border-box;
+      background: var(--bg-input);
+      color: var(--text-main);
+    }
+    .engine-key-input:focus {
+      outline: 2px solid #2563eb;
+      border-color: transparent;
+    }
+    .btn-engine-save {
+      padding: 7px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-engine-save:hover { background: #1d4ed8; }
+    .btn-engine-save.saved { background: #10b981; }
+    .engine-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
@@ -294,6 +350,21 @@
         <input type="checkbox" id="translate-toggle" checked>
         <span class="slider"></span>
       </label>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Công cụ dịch</div>
+    <div class="engine-card">
+      <select id="engine-select" class="engine-select">
+        <option value="google">Google Dịch (miễn phí)</option>
+        <option value="gemma">Gemma / Gemini API (gộp lô)</option>
+      </select>
+      <div class="engine-key-row" id="engine-key-row" style="display: none;">
+        <input type="password" id="engine-api-key" class="engine-key-input" placeholder="Gemini API Key...">
+        <button class="btn-engine-save" id="btn-engine-key-save">Lưu</button>
+      </div>
+      <div class="engine-hint" id="engine-hint"></div>
     </div>
   </div>
 
@@ -368,6 +439,7 @@
     </div>
   </div>
 
+  <script src="translation-settings-popup.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

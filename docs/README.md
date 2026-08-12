@@ -2,6 +2,8 @@
 
 Extension tự động việt hóa và tối ưu hiển thị cho webgame (Crave Saga X) chạy trên nền tảng Cocos2d-JS.
 
+Crave Saga X là tựa game nhập vai chiến thuật theo lượt (turn-based) dành cho người lớn, lấy bối cảnh tại Vesteria - một thế giới song song giả tưởng nơi chỉ có nam giới sinh sống, chịu sự chi phối giữa các thiên thần và ác quỷ. Người chơi vào vai "Master" thực hiện hành trình cứu thế giới. Vesteria là một thế giới song song độc nhất chỉ có các chàng trai thuộc nhiều chủng tộc khác nhau sinh sống. Nơi đây chịu sự kiểm soát của phe thiên thần (muốn dẫn dắt nhân loại đến utopia) và phe ác quỷ (thỏa mãn tham vọng và sự đồi trụy). Nhân vật chính được tái sinh tại Vesteria bởi Thần Sáng tạo và Vua Thần nguyên thủy Arche để bắt đầu hành trình phiêu lưu và cứu rỗi.
+
 <img alt="demo" src="https://github.com/user-attachments/assets/a9b8e1a9-3eea-42e0-bd67-ae69678a0d54" />
 
 ---

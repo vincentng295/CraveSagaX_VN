@@ -232,6 +232,17 @@
       </div>
     </div>
 
+    <div class="toolbar" style="align-items:center; border:1px solid var(--border-color); border-radius:8px; padding:12px; background:var(--bg-th);">
+      <label for="engine-select" style="font-size:13px; font-weight:600; color:var(--text-th);">Công cụ dịch:</label>
+      <select id="engine-select" class="select-box">
+        <option value="google">Google Dịch (miễn phí, dịch từng câu)</option>
+        <option value="gemma">Gemma / Gemini API (gộp lô, cần API Key)</option>
+      </select>
+      <input type="password" id="gemini-api-key" class="search-box" style="max-width:320px; display:none;" placeholder="Dán Gemini API Key vào đây...">
+      <button class="btn btn-primary" id="btn-save-engine" style="display:none;">💾 Lưu API Key</button>
+      <span id="engine-save-status" style="font-size:12px; color:var(--text-muted);"></span>
+    </div>
+
     <div class="toolbar">
       <input type="text" id="search-input" class="search-box" placeholder="Tìm kiếm câu thoại gốc hoặc bản dịch...">
       <select id="chap-filter-select" class="select-box">
@@ -279,6 +290,7 @@
     </div>
   </div>
 
+  <script src="translation-settings.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
