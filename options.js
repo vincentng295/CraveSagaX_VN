@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // fetch"), trong khi streamGenerateContent trả dữ liệu ngay khi có chunk đầu
     // tiên nên connection luôn "sống".
     const GEMMA_MAX_RETRIES = 3;
-    const GEMMA_RETRY_DELAY_MS = 30000; // 30s
+    const GEMMA_DEFAULT_RETRY_DELAY_MS = 30000; // fallback khi API không trả về retryDelay
 
     function sleepMs(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -442,6 +442,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // thì retry cũng vô ích nên không retry).
     function isRateLimitError(err) {
         return !!err && /HTTP 429/.test(err.message || String(err));
+    }
+
+    // Trích "retryDelay" (vd "33s", "1.5s") mà Gemini API gợi ý trong
+    // details[].@type=RetryInfo của response lỗi 429, trả về số mili-giây.
+    // Trả về null nếu không tìm thấy/parse được, để nơi gọi tự fallback về giá trị mặc định.
+    function parseRetryDelayMs(errBody) {
+        try {
+            const parsed = JSON.parse(errBody);
+            const details = parsed?.error?.details || [];
+            for (const d of details) {
+                if (d && typeof d.retryDelay === 'string') {
+                    const match = d.retryDelay.match(/^([\d.]+)s$/);
+                    if (match) return Math.ceil(parseFloat(match[1]) * 1000);
+                }
+            }
+        } catch (e) {
+            // errBody không phải JSON hợp lệ, bỏ qua
+        }
+        return null;
     }
 
     async function sendGemmaTurnOnce(contents, apiKey) {
@@ -462,7 +481,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!res.ok) {
             const errBody = await res.text().catch(() => '');
-            throw new Error(`HTTP ${res.status} ${errBody}`);
+            const err = new Error(`HTTP ${res.status} ${errBody}`);
+            if (res.status === 429) {
+                err.retryDelayMs = parseRetryDelayMs(errBody);
+            }
+            throw err;
         }
 
         if (!res.body) {
@@ -515,7 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Gọi sendGemmaTurnOnce, tự động thử lại nếu gặp lỗi 429 (quota exceeded):
-    // chờ 30s rồi thử lại, tối đa 3 lần thử (1 lần đầu + 2 lần retry).
+    // ưu tiên dùng "retryDelay" mà server gợi ý (details[].RetryInfo.retryDelay),
+    // nếu không có thì fallback chờ 30s, tối đa 3 lần thử (1 lần đầu + 2 lần retry).
     async function sendGemmaTurn(contents, apiKey, onRetryNotice) {
         let lastErr;
         for (let attempt = 1; attempt <= GEMMA_MAX_RETRIES; attempt++) {
@@ -527,11 +551,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isRateLimitError(err) || isLastAttempt) {
                     throw err;
                 }
-                console.warn(`[Gemma] HTTP 429, thử lại sau 30s (lần ${attempt}/${GEMMA_MAX_RETRIES})...`);
+                const delayMs = err.retryDelayMs || GEMMA_DEFAULT_RETRY_DELAY_MS;
+                console.warn(`[Gemma] HTTP 429, thử lại sau ${Math.round(delayMs / 1000)}s (lần ${attempt}/${GEMMA_MAX_RETRIES})...`);
                 if (typeof onRetryNotice === 'function') {
-                    onRetryNotice(attempt, GEMMA_MAX_RETRIES);
+                    onRetryNotice(attempt, GEMMA_MAX_RETRIES, delayMs);
                 }
-                await sleepMs(GEMMA_RETRY_DELAY_MS);
+                await sleepMs(delayMs);
             }
         }
         throw lastErr;
@@ -626,8 +651,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gemmaRetranslateStatus.innerText = `Đang gửi ${items.length} câu tới Gemma...`;
 
         try {
-            const map = await callGemmaBatchDirect(items, geminiApiKey, (attempt, max) => {
-                gemmaRetranslateStatus.innerText = `Gemma bị giới hạn quota (429), thử lại sau 30s (lần ${attempt}/${max})...`;
+            const map = await callGemmaBatchDirect(items, geminiApiKey, (attempt, max, delayMs) => {
+                const secs = Math.round(delayMs / 1000);
+                gemmaRetranslateStatus.innerText = `Gemma bị giới hạn quota (429), thử lại sau ${secs}s (lần ${attempt}/${max})...`;
             });
             items.forEach((it) => {
                 const translated = map[it.text];

@@ -153,8 +153,27 @@ function isRateLimitError(err) {
     return !!err && /HTTP 429/.test(err.message || String(err));
 }
 
+// Trích "retryDelay" (vd "33s", "1.5s") mà Gemini API gợi ý trong
+// details[].@type=RetryInfo của response lỗi 429, trả về số mili-giây.
+// Trả về null nếu không tìm thấy/parse được, để nơi gọi tự fallback về giá trị mặc định.
+function parseRetryDelayMs(errBody) {
+    try {
+        const parsed = JSON.parse(errBody);
+        const details = parsed?.error?.details || [];
+        for (const d of details) {
+            if (d && typeof d.retryDelay === 'string') {
+                const match = d.retryDelay.match(/^([\d.]+)s$/);
+                if (match) return Math.ceil(parseFloat(match[1]) * 1000);
+            }
+        }
+    } catch (e) {
+        // errBody không phải JSON hợp lệ, bỏ qua
+    }
+    return null;
+}
+
 const GEMMA_MAX_RETRIES = 3;
-const GEMMA_RETRY_DELAY_MS = 30000; // 30s
+const GEMMA_DEFAULT_RETRY_DELAY_MS = 30000; // fallback khi API không trả về retryDelay
 
 // Gọi streamGenerateContent 1 lần, trả về rawText đã gộp từ các chunk SSE.
 async function callGeminiStreamOnce(url, contents) {
@@ -180,7 +199,11 @@ async function callGeminiStreamOnce(url, contents) {
 
     if (!res.ok) {
         const errBody = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status} ${errBody}`);
+        const err = new Error(`HTTP ${res.status} ${errBody}`);
+        if (res.status === 429) {
+            err.retryDelayMs = parseRetryDelayMs(errBody);
+        }
+        throw err;
     }
 
     if (!res.body) {
@@ -238,7 +261,8 @@ async function callGeminiStreamOnce(url, contents) {
 }
 
 // Gọi callGeminiStreamOnce, tự động thử lại nếu gặp lỗi 429 (quota exceeded):
-// chờ 30s rồi thử lại, tối đa 3 lần thử (1 lần đầu + 2 lần retry).
+// ưu tiên dùng "retryDelay" mà server gợi ý (details[].RetryInfo.retryDelay),
+// nếu không có thì fallback chờ 30s, tối đa 3 lần thử (1 lần đầu + 2 lần retry).
 async function callGeminiStreamWithRetry(url, contents, onRetryNotice) {
     let lastErr;
     for (let attempt = 1; attempt <= GEMMA_MAX_RETRIES; attempt++) {
@@ -250,11 +274,12 @@ async function callGeminiStreamWithRetry(url, contents, onRetryNotice) {
             if (!isRateLimitError(err) || isLastAttempt) {
                 throw err;
             }
-            console.warn(`[Gemma] HTTP 429, thử lại sau 30s (lần ${attempt}/${GEMMA_MAX_RETRIES})...`);
+            const delayMs = err.retryDelayMs || GEMMA_DEFAULT_RETRY_DELAY_MS;
+            console.warn(`[Gemma] HTTP 429, thử lại sau ${Math.round(delayMs / 1000)}s (lần ${attempt}/${GEMMA_MAX_RETRIES})...`);
             if (typeof onRetryNotice === 'function') {
-                onRetryNotice(attempt, GEMMA_MAX_RETRIES);
+                onRetryNotice(attempt, GEMMA_MAX_RETRIES, delayMs);
             }
-            await sleepMs(GEMMA_RETRY_DELAY_MS);
+            await sleepMs(delayMs);
         }
     }
     throw lastErr;
@@ -283,13 +308,13 @@ window.addEventListener('message', async (event) => {
         // model thấy được ngữ cảnh đã dịch trước, thay vì chỉ 1 prompt đơn lẻ.
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
-        const rawText = await callGeminiStreamWithRetry(url, contents, (attempt, max) => {
+        const rawText = await callGeminiStreamWithRetry(url, contents, (attempt, max, delayMs) => {
             window.postMessage({
                 type: 'GEMMA_BATCH_RETRY',
                 requestId,
                 attempt,
                 max,
-                delayMs: GEMMA_RETRY_DELAY_MS
+                delayMs
             }, '*');
         });
 
