@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadMoreSentinel = document.getElementById('load-more-sentinel');
     const btnRetranslateGemma = document.getElementById('btn-retranslate-gemma');
     const gemmaRetranslateStatus = document.getElementById('gemma-retranslate-status');
+    const btnRetranslateGemmaRetry = document.getElementById('btn-retranslate-gemma-retry');
 
     const REMOTE_PRETRANSLATED_URL = 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/pretranslated.json';
 
@@ -316,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chapRemarkInput.style.display = 'none';
             chapRemarkInput.value = '';
             if (btnRetranslateGemma) btnRetranslateGemma.style.display = 'none';
+            hideGemmaRetryButton();
         }
 
         const keys = sortKeys(Object.keys(translationDict));
@@ -454,7 +456,9 @@ document.addEventListener('DOMContentLoaded', () => {
             for (const d of details) {
                 if (d && typeof d.retryDelay === 'string') {
                     const match = d.retryDelay.match(/^([\d.]+)s$/);
-                    if (match) return Math.ceil(parseFloat(match[1]) * 1000);
+                    // +1s cho chắc, tránh trường hợp thử lại ngay sát mép thời điểm
+                    // server mới reset quota do sai lệch làm tròn/độ trễ mạng.
+                    if (match) return Math.ceil(parseFloat(match[1]) * 1000) + 1000;
                 }
             }
         } catch (e) {
@@ -574,14 +578,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Gọi Gemma/Gemini API trực tiếp cho 1 lô câu thoại, trả về map { original: translated }.
-    // Bên trong tự tách "items" thành các turn 40 câu, gửi nối tiếp trong cùng 1
+    // Bên trong tự tách "items" thành các turn 100 câu, gửi nối tiếp trong cùng 1
     // conversation (xem GEMMA_DIALOG_CHUNK_SIZE ở trên) thay vì gửi 1 request duy nhất.
-    async function callGemmaBatchDirect(items, apiKey, onRetryNotice) {
+    // onChunkResult(chunkItems, chunkMap) được gọi ngay sau khi MỖI chunk dịch xong,
+    // để nơi gọi có thể lưu tiến trình dần dần thay vì đợi tới khi xong hết mới lưu.
+    // Nếu 1 chunk thất bại (vd hết quota sau khi retry hết số lần cho phép), lỗi ném
+    // ra sẽ có kèm "err.processedCount" (số câu đã dịch xong ở các chunk trước đó)
+    // để nơi gọi biết chính xác cần dịch lại từ đâu.
+    async function callGemmaBatchDirect(items, apiKey, onRetryNotice, onChunkResult) {
         if (!items.length) return {};
 
         const chunks = buildDialogChunks(items, GEMMA_DIALOG_CHUNK_SIZE);
         const contents = [];
         const map = {};
+        let processedCount = 0;
 
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
@@ -593,20 +603,123 @@ document.addEventListener('DOMContentLoaded', () => {
 
             contents.push({ role: 'user', parts: [{ text: userText }] });
 
-            const rawText = await sendGemmaTurn(contents, apiKey, onRetryNotice);
-            const responseItems = parseGemmaRawText(rawText);
+            let rawText;
+            try {
+                rawText = await sendGemmaTurn(contents, apiKey, onRetryNotice);
+            } catch (err) {
+                err.processedCount = processedCount;
+                err.partialMap = map;
+                throw err;
+            }
 
+            const chunkMap = {};
+            const responseItems = parseGemmaRawText(rawText);
             responseItems.forEach((item) => {
                 if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
                     map[item.original] = item.translated;
+                    chunkMap[item.original] = item.translated;
                 }
             });
+
+            processedCount += chunk.length;
+            if (typeof onChunkResult === 'function') {
+                onChunkResult(chunk, chunkMap);
+            }
 
             // Đưa câu trả lời của model vào lịch sử để turn kế tiếp giữ ngữ cảnh.
             contents.push({ role: 'model', parts: [{ text: rawText }] });
         }
 
         return map;
+    }
+
+    // Danh sách các câu thoại chưa dịch được của lần chạy Gemma gần nhất (do hết
+    // quota sau khi đã retry hết số lần cho phép) — dùng để nút "Thử lại" chỉ
+    // dịch tiếp phần còn thiếu thay vì dịch lại từ đầu.
+    let pendingGemmaRetryItems = null;
+
+    function hideGemmaRetryButton() {
+        pendingGemmaRetryItems = null;
+        if (btnRetranslateGemmaRetry) btnRetranslateGemmaRetry.style.display = 'none';
+    }
+
+    function showGemmaRetryButton(remainingItems) {
+        pendingGemmaRetryItems = remainingItems;
+        if (!btnRetranslateGemmaRetry) return;
+        btnRetranslateGemmaRetry.innerText = `🔁 Thử lại phần còn lại (${remainingItems.length} câu)`;
+        btnRetranslateGemmaRetry.style.display = '';
+    }
+
+    // Chạy dịch Gemma cho 1 danh sách "items" đã chuẩn bị sẵn (key/text/speaker),
+    // lưu tiến trình dần dần sau mỗi chunk dịch xong, và nếu thất bại giữa chừng
+    // (hết quota sau khi retry hết số lần cho phép) thì KHÔNG hủy bỏ những câu đã
+    // dịch được — vẫn giữ nguyên bản dịch đã lưu, đồng thời hiện nút để dịch tiếp
+    // phần còn lại thay vì phải dịch lại từ đầu.
+    async function runGemmaTranslation(items, apiKey, chapLabel) {
+        const originalLabel = btnRetranslateGemma.innerText;
+        btnRetranslateGemma.disabled = true;
+        if (btnRetranslateGemmaRetry) btnRetranslateGemmaRetry.disabled = true;
+        gemmaRetranslateStatus.style.display = 'block';
+
+        let translatedCount = 0;
+
+        btnRetranslateGemma.innerText = `⏳ Đang dịch...`;
+        gemmaRetranslateStatus.innerText = `Đang gửi ${items.length} câu tới Gemma...`;
+
+        try {
+            await callGemmaBatchDirect(
+                items,
+                apiKey,
+                (attempt, max, delayMs) => {
+                    const secs = Math.round(delayMs / 1000);
+                    gemmaRetranslateStatus.innerText = `Gemma bị giới hạn quota (429), thử lại sau ${secs}s (lần ${attempt}/${max})...`;
+                },
+                (chunkItems, chunkMap) => {
+                    // Lưu ngay sau mỗi chunk dịch xong, không đợi tới khi xong hết —
+                    // để nếu chunk sau thất bại thì các chunk trước đã dịch vẫn được giữ lại.
+                    let chunkTranslatedCount = 0;
+                    chunkItems.forEach((it) => {
+                        const translated = chunkMap[it.text];
+                        if (translated && translated.trim()) {
+                            updateEntryTranslation(it.key, translated.trim());
+                            chunkTranslatedCount++;
+                        }
+                    });
+                    translatedCount += chunkTranslatedCount;
+                    saveDictionary();
+                    renderTable();
+                    gemmaRetranslateStatus.innerText = `Đã dịch ${translatedCount} câu, đang tiếp tục...`;
+                }
+            );
+
+            hideGemmaRetryButton();
+            alert(`Đã dịch xong ${translatedCount}/${items.length} câu thoại trong chap "${chapLabel}".`);
+        } catch (err) {
+            console.error('[Gemma] Lỗi khi dịch lại lô:', err);
+
+            const processedCount = typeof err.processedCount === 'number' ? err.processedCount : 0;
+            const remainingItems = items.slice(processedCount);
+
+            if (remainingItems.length > 0) {
+                showGemmaRetryButton(remainingItems);
+                alert(
+                    `Lỗi khi dịch bằng Gemma: ${err.message || err}\n\n` +
+                    `Đã lưu ${translatedCount} câu dịch được trước khi lỗi xảy ra. ` +
+                    `Còn ${remainingItems.length} câu chưa dịch — bấm nút "Thử lại phần còn lại" để tiếp tục.`
+                );
+            } else {
+                hideGemmaRetryButton();
+                alert(`Lỗi khi dịch lại bằng Gemma: ${err.message || err}`);
+            }
+        }
+
+        btnRetranslateGemma.disabled = false;
+        if (btnRetranslateGemmaRetry) btnRetranslateGemmaRetry.disabled = false;
+        btnRetranslateGemma.innerText = originalLabel;
+        gemmaRetranslateStatus.style.display = 'none';
+        gemmaRetranslateStatus.innerText = '';
+
+        renderTable();
     }
 
     // Dịch lại toàn bộ câu thoại đang hiển thị (theo Chap + tìm kiếm đang filter) bằng Gemma,
@@ -635,46 +748,37 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        hideGemmaRetryButton();
+
         const items = keys.map((key) => ({
             key,
             text: key,
             speaker: getEntryName(currentFilteredDict[key])
         }));
 
-        const originalLabel = btnRetranslateGemma.innerText;
-        btnRetranslateGemma.disabled = true;
-        gemmaRetranslateStatus.style.display = 'block';
+        await runGemmaTranslation(items, geminiApiKey, chapLabel);
+    }
 
-        let translatedCount = 0;
+    if (btnRetranslateGemmaRetry) {
+        btnRetranslateGemmaRetry.addEventListener('click', async () => {
+            if (!pendingGemmaRetryItems || !pendingGemmaRetryItems.length) return;
 
-        btnRetranslateGemma.innerText = `⏳ Đang dịch...`;
-        gemmaRetranslateStatus.innerText = `Đang gửi ${items.length} câu tới Gemma...`;
-
-        try {
-            const map = await callGemmaBatchDirect(items, geminiApiKey, (attempt, max, delayMs) => {
-                const secs = Math.round(delayMs / 1000);
-                gemmaRetranslateStatus.innerText = `Gemma bị giới hạn quota (429), thử lại sau ${secs}s (lần ${attempt}/${max})...`;
+            const { geminiApiKey } = await new Promise((resolve) => {
+                chrome.storage.local.get({ geminiApiKey: '' }, resolve);
             });
-            items.forEach((it) => {
-                const translated = map[it.text];
-                if (translated && translated.trim()) {
-                    updateEntryTranslation(it.key, translated.trim());
-                    translatedCount++;
-                }
-            });
-            saveDictionary();
-            alert(`Đã dịch xong ${translatedCount}/${items.length} câu thoại trong chap "${chapLabel}".`);
-        } catch (err) {
-            console.error('[Gemma] Lỗi khi dịch lại lô:', err);
-            alert(`Lỗi khi dịch lại bằng Gemma: ${err.message || err}`);
-        }
 
-        btnRetranslateGemma.disabled = false;
-        btnRetranslateGemma.innerText = originalLabel;
-        gemmaRetranslateStatus.style.display = 'none';
-        gemmaRetranslateStatus.innerText = '';
+            if (!geminiApiKey) {
+                alert('Vui lòng nhập Gemini API Key ở mục "Công cụ dịch" phía trên trước khi thử lại.');
+                return;
+            }
 
-        renderTable();
+            const filterChap = chapFilterSelect.value;
+            const chapLabel = chapRemarks[filterChap] || filterChap || '';
+            const itemsToRetry = pendingGemmaRetryItems;
+            pendingGemmaRetryItems = null;
+
+            await runGemmaTranslation(itemsToRetry, geminiApiKey, chapLabel);
+        });
     }
 
     if (btnRetranslateGemma) {
@@ -858,7 +962,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applySearchFilter();
         }
     });
-    chapFilterSelect.addEventListener('change', () => renderTable());
+    chapFilterSelect.addEventListener('change', () => { hideGemmaRetryButton(); renderTable(); });
 
     const sortSelect = document.getElementById('sort-select');
     if (sortSelect) {

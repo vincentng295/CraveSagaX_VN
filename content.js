@@ -163,7 +163,9 @@ function parseRetryDelayMs(errBody) {
         for (const d of details) {
             if (d && typeof d.retryDelay === 'string') {
                 const match = d.retryDelay.match(/^([\d.]+)s$/);
-                if (match) return Math.ceil(parseFloat(match[1]) * 1000);
+                // +1s cho chắc, tránh trường hợp thử lại ngay sát mép thời điểm
+                // server mới reset quota do sai lệch làm tròn/độ trễ mạng.
+                if (match) return Math.ceil(parseFloat(match[1]) * 1000) + 1000;
             }
         }
     } catch (e) {
