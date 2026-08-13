@@ -154,7 +154,12 @@ window.addEventListener('message', async (event) => {
     }
 
     try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        // Dùng streamGenerateContent (SSE) thay vì generateContent: với các lô dịch
+        // dài, generateContent giữ kết nối im lặng cho tới khi có response hoàn
+        // chỉnh, dễ bị proxy/trình duyệt coi là treo và tự huỷ ("Failed to fetch").
+        // streamGenerateContent trả dữ liệu ngay khi có chunk đầu tiên nên connection
+        // luôn "sống", giảm hẳn tình trạng fetch thất bại giữa chừng.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -175,13 +180,57 @@ window.addEventListener('message', async (event) => {
             throw new Error(`HTTP ${res.status} ${errBody}`);
         }
 
-        const data = await res.json();
-        // Phòng trường hợp thinkingBudget:0 không được model tôn trọng hoàn toàn,
-        // vẫn lọc bỏ mọi part có "thought": true trước khi ghép text lại.
-        const rawText = (data?.candidates?.[0]?.content?.parts || [])
-            .filter((p) => !p.thought)
-            .map((p) => p.text || '')
-            .join('') || '';
+        if (!res.body) {
+            throw new Error('Trình duyệt không hỗ trợ đọc response dạng stream.');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let rawText = '';
+
+        function consumeSseEvent(eventBlock) {
+            // Mỗi event SSE gồm nhiều dòng, chỉ quan tâm các dòng "data: {...}"
+            const lines = eventBlock.split('\n');
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith('data:')) continue;
+                const jsonStr = trimmed.slice(5).trim();
+                if (!jsonStr || jsonStr === '[DONE]') continue;
+
+                let chunkData;
+                try {
+                    chunkData = JSON.parse(jsonStr);
+                } catch (e) {
+                    continue; // bỏ qua chunk JSON lỗi/không trọn vẹn
+                }
+
+                // Phòng trường hợp thinkingBudget:0 không được model tôn trọng hoàn toàn,
+                // vẫn lọc bỏ mọi part có "thought": true trước khi ghép text lại.
+                const parts = chunkData?.candidates?.[0]?.content?.parts || [];
+                for (const p of parts) {
+                    if (!p.thought && p.text) rawText += p.text;
+                }
+            }
+        }
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            // SSE events cách nhau bởi dòng trống ("\n\n")
+            let sepIndex;
+            while ((sepIndex = buffer.indexOf('\n\n')) !== -1) {
+                const eventBlock = buffer.slice(0, sepIndex);
+                buffer = buffer.slice(sepIndex + 2);
+                consumeSseEvent(eventBlock);
+            }
+        }
+        // Xử lý phần còn sót lại trong buffer (nếu stream kết thúc không có \n\n cuối)
+        if (buffer.trim()) consumeSseEvent(buffer);
+
         window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, rawText }, '*');
     } catch (err) {
         window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, error: err.message || String(err) }, '*');

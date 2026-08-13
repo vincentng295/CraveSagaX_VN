@@ -412,7 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!items.length) return {};
 
         const promptText = `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${JSON.stringify(items.map((it) => ({ original: it.text, name: it.speaker || null })))}`;
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        // Dùng streamGenerateContent (SSE) thay vì generateContent: với lô 200 câu
+        // thoại, generateContent giữ kết nối im lặng tới khi có response hoàn chỉnh,
+        // dễ bị coi là treo và tự huỷ ("Failed to fetch"). streamGenerateContent trả
+        // dữ liệu ngay khi có chunk đầu tiên nên connection luôn "sống".
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
         const res = await fetch(url, {
             method: 'POST',
@@ -432,11 +436,51 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error(`HTTP ${res.status} ${errBody}`);
         }
 
-        const data = await res.json();
-        const rawText = (data?.candidates?.[0]?.content?.parts || [])
-            .filter((p) => !p.thought)
-            .map((p) => p.text || '')
-            .join('') || '';
+        if (!res.body) {
+            throw new Error('Trình duyệt không hỗ trợ đọc response dạng stream.');
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let rawText = '';
+
+        function consumeSseEvent(eventBlock) {
+            const lines = eventBlock.split('\n');
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed.startsWith('data:')) continue;
+                const jsonStr = trimmed.slice(5).trim();
+                if (!jsonStr || jsonStr === '[DONE]') continue;
+
+                let chunkData;
+                try {
+                    chunkData = JSON.parse(jsonStr);
+                } catch (e) {
+                    continue; // bỏ qua chunk JSON lỗi/không trọn vẹn
+                }
+
+                const parts = chunkData?.candidates?.[0]?.content?.parts || [];
+                for (const p of parts) {
+                    if (!p.thought && p.text) rawText += p.text;
+                }
+            }
+        }
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            let sepIndex;
+            while ((sepIndex = buffer.indexOf('\n\n')) !== -1) {
+                const eventBlock = buffer.slice(0, sepIndex);
+                buffer = buffer.slice(sepIndex + 2);
+                consumeSseEvent(eventBlock);
+            }
+        }
+        if (buffer.trim()) consumeSseEvent(buffer);
 
         const jsonStart = rawText.indexOf('{');
         const jsonEnd = rawText.lastIndexOf('}');
