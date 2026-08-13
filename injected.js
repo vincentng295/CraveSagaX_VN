@@ -231,7 +231,17 @@ function requestGemmaBatchFromContentScript(contents) {
         }, 600000);
 
         function handler(event) {
-            if (!event.data || event.data.type !== 'GEMMA_BATCH_RESULT' || event.data.requestId !== requestId) return;
+            if (!event.data || !event.data.requestId || event.data.requestId !== requestId) return;
+
+            // content.js đang tự động thử lại sau lỗi 429 (quota) — chỉ cập nhật
+            // toast, KHÔNG resolve/reject vì kết quả thật vẫn chưa về.
+            if (event.data.type === 'GEMMA_BATCH_RETRY') {
+                const secs = Math.round((event.data.delayMs || 30000) / 1000);
+                showGemmaToast(`Gemma bị giới hạn quota (429), thử lại sau ${secs}s (lần ${event.data.attempt}/${event.data.max})...`);
+                return;
+            }
+
+            if (!event.data.type || event.data.type !== 'GEMMA_BATCH_RESULT') return;
             clearTimeout(timeoutId);
             window.removeEventListener('message', handler);
             if (event.data.error) {

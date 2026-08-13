@@ -430,7 +430,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // tới khi có response hoàn chỉnh, dễ bị coi là treo và tự huỷ ("Failed to
     // fetch"), trong khi streamGenerateContent trả dữ liệu ngay khi có chunk đầu
     // tiên nên connection luôn "sống".
-    async function sendGemmaTurn(contents, apiKey) {
+    const GEMMA_MAX_RETRIES = 3;
+    const GEMMA_RETRY_DELAY_MS = 30000; // 30s
+
+    function sleepMs(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    // Kiểm tra 1 lỗi có phải do HTTP 429 (quota/rate-limit) hay không, để quyết
+    // định có nên tự động thử lại hay không (lỗi khác như API Key sai, 400...
+    // thì retry cũng vô ích nên không retry).
+    function isRateLimitError(err) {
+        return !!err && /HTTP 429/.test(err.message || String(err));
+    }
+
+    async function sendGemmaTurnOnce(contents, apiKey) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
         const res = await fetch(url, {
@@ -500,6 +514,29 @@ document.addEventListener('DOMContentLoaded', () => {
         return rawText;
     }
 
+    // Gọi sendGemmaTurnOnce, tự động thử lại nếu gặp lỗi 429 (quota exceeded):
+    // chờ 30s rồi thử lại, tối đa 3 lần thử (1 lần đầu + 2 lần retry).
+    async function sendGemmaTurn(contents, apiKey, onRetryNotice) {
+        let lastErr;
+        for (let attempt = 1; attempt <= GEMMA_MAX_RETRIES; attempt++) {
+            try {
+                return await sendGemmaTurnOnce(contents, apiKey);
+            } catch (err) {
+                lastErr = err;
+                const isLastAttempt = attempt >= GEMMA_MAX_RETRIES;
+                if (!isRateLimitError(err) || isLastAttempt) {
+                    throw err;
+                }
+                console.warn(`[Gemma] HTTP 429, thử lại sau 30s (lần ${attempt}/${GEMMA_MAX_RETRIES})...`);
+                if (typeof onRetryNotice === 'function') {
+                    onRetryNotice(attempt, GEMMA_MAX_RETRIES);
+                }
+                await sleepMs(GEMMA_RETRY_DELAY_MS);
+            }
+        }
+        throw lastErr;
+    }
+
     function parseGemmaRawText(rawText) {
         const jsonStart = rawText.indexOf('{');
         const jsonEnd = rawText.lastIndexOf('}');
@@ -514,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Gọi Gemma/Gemini API trực tiếp cho 1 lô câu thoại, trả về map { original: translated }.
     // Bên trong tự tách "items" thành các turn 40 câu, gửi nối tiếp trong cùng 1
     // conversation (xem GEMMA_DIALOG_CHUNK_SIZE ở trên) thay vì gửi 1 request duy nhất.
-    async function callGemmaBatchDirect(items, apiKey) {
+    async function callGemmaBatchDirect(items, apiKey, onRetryNotice) {
         if (!items.length) return {};
 
         const chunks = buildDialogChunks(items, GEMMA_DIALOG_CHUNK_SIZE);
@@ -531,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             contents.push({ role: 'user', parts: [{ text: userText }] });
 
-            const rawText = await sendGemmaTurn(contents, apiKey);
+            const rawText = await sendGemmaTurn(contents, apiKey, onRetryNotice);
             const responseItems = parseGemmaRawText(rawText);
 
             responseItems.forEach((item) => {
@@ -589,7 +626,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gemmaRetranslateStatus.innerText = `Đang gửi ${items.length} câu tới Gemma...`;
 
         try {
-            const map = await callGemmaBatchDirect(items, geminiApiKey);
+            const map = await callGemmaBatchDirect(items, geminiApiKey, (attempt, max) => {
+                gemmaRetranslateStatus.innerText = `Gemma bị giới hạn quota (429), thử lại sau 30s (lần ${attempt}/${max})...`;
+            });
             items.forEach((it) => {
                 const translated = map[it.text];
                 if (translated && translated.trim()) {
