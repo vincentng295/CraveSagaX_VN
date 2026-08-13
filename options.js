@@ -410,13 +410,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Số câu thoại tối đa mỗi lượt (turn) gửi lên Gemma trong 1 "phiên" dịch. Thay vì
-    // nhồi cả lô (vd. 200 câu) vào 1 request duy nhất, ta tách thành từng lô nhỏ 40
+    // nhồi cả lô (vd. 200 câu) vào 1 request duy nhất, ta tách thành từng lô nhỏ 150
     // câu và gửi nối tiếp dưới dạng nhiều turn trong CÙNG một conversation (turn sau
     // kèm theo toàn bộ turn trước làm lịch sử) — giảm độ trễ/khả năng timeout của 1
     // request quá lớn, đồng thời model vẫn giữ ngữ cảnh xuyên suốt nhờ thấy lại các
     // cặp user/model của những lô trước. Gemma hỗ trợ tới ~256k token nên hầu như
     // không có nguy cơ vượt giới hạn context dù nối nhiều lượt.
-    const GEMMA_DIALOG_CHUNK_SIZE = 100;
+    const GEMMA_DIALOG_CHUNK_SIZE = 150;
 
     function buildDialogChunks(items, size) {
         const chunks = [];
@@ -578,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Gọi Gemma/Gemini API trực tiếp cho 1 lô câu thoại, trả về map { original: translated }.
-    // Bên trong tự tách "items" thành các turn 100 câu, gửi nối tiếp trong cùng 1
+    // Bên trong tự tách "items" thành các turn 150 câu, gửi nối tiếp trong cùng 1
     // conversation (xem GEMMA_DIALOG_CHUNK_SIZE ở trên) thay vì gửi 1 request duy nhất.
     // onChunkResult(chunkItems, chunkMap) được gọi ngay sau khi MỖI chunk dịch xong,
     // để nơi gọi có thể lưu tiến trình dần dần thay vì đợi tới khi xong hết mới lưu.
