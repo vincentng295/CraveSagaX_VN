@@ -254,12 +254,12 @@ function requestGemmaBatchFromContentScript(contents) {
 
 // Số câu thoại tối đa mỗi lượt (turn) gửi lên Gemma. Thay vì nhồi toàn bộ
 // uniqueItems (có thể vài trăm/nghìn câu) vào 1 request duy nhất, ta tách thành
-// từng lô 40 câu và gửi nối tiếp dưới dạng nhiều turn trong CÙNG một conversation
+// từng lô 100 câu và gửi nối tiếp dưới dạng nhiều turn trong CÙNG một conversation
 // (lượt sau kèm theo toàn bộ lượt trước làm lịch sử) — giúp giảm độ trễ/khả năng
 // timeout của 1 request quá lớn, đồng thời model vẫn giữ được ngữ cảnh xuyên suốt
 // nhờ thấy lại các cặp user/model của những lô trước. Gemma hỗ trợ tới ~256k
 // token nên hầu như không có nguy cơ vượt giới hạn context dù nối nhiều lượt.
-const GEMMA_DIALOG_CHUNK_SIZE = 40;
+const GEMMA_DIALOG_CHUNK_SIZE = 100;
 
 function buildDialogChunks(items, size) {
     const chunks = [];
