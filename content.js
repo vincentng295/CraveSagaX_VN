@@ -144,12 +144,17 @@ window.addEventListener('message', (event) => {
 window.addEventListener('message', async (event) => {
     if (!event.data || event.data.type !== 'GEMMA_BATCH_REQUEST') return;
 
-    const { requestId, apiKey, modelId, promptText } = event.data;
+    const { requestId, apiKey, modelId, contents } = event.data;
 
     if (!requestId) return;
 
     if (!apiKey) {
         window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, error: 'Thiếu API Key' }, '*');
+        return;
+    }
+
+    if (!Array.isArray(contents) || contents.length === 0) {
+        window.postMessage({ type: 'GEMMA_BATCH_RESULT', requestId, error: 'Thiếu nội dung hội thoại (contents)' }, '*');
         return;
     }
 
@@ -159,12 +164,16 @@ window.addEventListener('message', async (event) => {
         // chỉnh, dễ bị proxy/trình duyệt coi là treo và tự huỷ ("Failed to fetch").
         // streamGenerateContent trả dữ liệu ngay khi có chunk đầu tiên nên connection
         // luôn "sống", giảm hẳn tình trạng fetch thất bại giữa chừng.
+        //
+        // "contents" ở đây là cả lịch sử hội thoại (nhiều turn user/model của các
+        // lô 40 câu trước đó) do injected.js gửi sang — chuyển tiếp nguyên vẹn để
+        // model thấy được ngữ cảnh đã dịch trước, thay vì chỉ 1 prompt đơn lẻ.
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: promptText }] }],
+                contents,
                 generationConfig: {
                     temperature: 0.35,
                     responseMimeType: 'application/json',

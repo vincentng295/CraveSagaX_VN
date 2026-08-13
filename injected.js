@@ -217,7 +217,11 @@ const GEMINI_SYSTEM_INSTRUCTION = "Bạn là AI chuyên chỉnh sửa bản dị
  * postMessage, giống cơ chế GAME_ENGINE_UPDATE / GAME_DICT_UPDATE đã có sẵn.
  */
 let __gemmaReqCounter = 0;
-function requestGemmaBatchFromContentScript(promptText) {
+// contents: mảng conversation turns dạng [{role:'user'|'model', parts:[{text}]}]
+// giống format "contents" của Gemini API — gửi NGUYÊN cả lịch sử hội thoại mỗi lần
+// (API không lưu state), để model thấy được các lượt dịch trước đó và giữ nhất
+// quán văn phong/ngữ cảnh giữa các lô.
+function requestGemmaBatchFromContentScript(contents) {
     return new Promise((resolve, reject) => {
         const requestId = 'gemma_' + Date.now() + '_' + (++__gemmaReqCounter);
 
@@ -243,9 +247,40 @@ function requestGemmaBatchFromContentScript(promptText) {
             requestId,
             apiKey: window.geminiApiKey,
             modelId: GEMINI_MODEL_ID,
-            promptText
+            contents
         }, '*');
     });
+}
+
+// Số câu thoại tối đa mỗi lượt (turn) gửi lên Gemma. Thay vì nhồi toàn bộ
+// uniqueItems (có thể vài trăm/nghìn câu) vào 1 request duy nhất, ta tách thành
+// từng lô 40 câu và gửi nối tiếp dưới dạng nhiều turn trong CÙNG một conversation
+// (lượt sau kèm theo toàn bộ lượt trước làm lịch sử) — giúp giảm độ trễ/khả năng
+// timeout của 1 request quá lớn, đồng thời model vẫn giữ được ngữ cảnh xuyên suốt
+// nhờ thấy lại các cặp user/model của những lô trước. Gemma hỗ trợ tới ~256k
+// token nên hầu như không có nguy cơ vượt giới hạn context dù nối nhiều lượt.
+const GEMMA_DIALOG_CHUNK_SIZE = 40;
+
+function buildDialogChunks(items, size) {
+    const chunks = [];
+    for (let i = 0; i < items.length; i += size) {
+        chunks.push(items.slice(i, i + size));
+    }
+    return chunks;
+}
+
+function parseGemmaRawText(rawText) {
+    // Phòng vệ thêm: dù đã tắt thinking + lọc "thought" part ở content.js,
+    // vẫn trích phần {...} ngoài cùng ra trước khi parse, để tránh vỡ nếu
+    // model lỡ chèn thêm text thừa trước/sau JSON.
+    const jsonStart = rawText.indexOf('{');
+    const jsonEnd = rawText.lastIndexOf('}');
+    const jsonSlice = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart)
+        ? rawText.slice(jsonStart, jsonEnd + 1)
+        : rawText;
+
+    const parsed = JSON.parse(jsonSlice);
+    return Array.isArray(parsed) ? parsed : (parsed.response || []);
 }
 
 async function callGemmaBatch(uniqueItems) {
@@ -258,29 +293,33 @@ async function callGemmaBatch(uniqueItems) {
     // Lưu ý: model Gemma (khác Gemini) trên generativelanguage API KHÔNG hỗ trợ
     // "systemInstruction" và "responseSchema" -> phải gộp instruction vào prompt
     // và chỉ dùng responseMimeType để ép JSON, nếu không server trả lỗi 400.
-    const promptText = `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${JSON.stringify(uniqueItems.map((it) => ({ original: it.text, name: it.speaker || null })))}`;
+    const chunks = buildDialogChunks(uniqueItems, GEMMA_DIALOG_CHUNK_SIZE);
+    const contents = [];
+    const map = {};
 
     try {
-        const rawText = await requestGemmaBatchFromContentScript(promptText);
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            const inputJson = JSON.stringify(chunk.map((it) => ({ original: it.text, name: it.speaker || null })));
 
-        // Phòng vệ thêm: dù đã tắt thinking + lọc "thought" part ở content.js,
-        // vẫn trích phần {...} ngoài cùng ra trước khi parse, để tránh vỡ nếu
-        // model lỡ chèn thêm text thừa trước/sau JSON.
-        const jsonStart = rawText.indexOf('{');
-        const jsonEnd = rawText.lastIndexOf('}');
-        const jsonSlice = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart)
-            ? rawText.slice(jsonStart, jsonEnd + 1)
-            : rawText;
+            const userText = (i === 0)
+                ? `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${inputJson}`
+                : `Dịch tiếp danh sách câu thoại sau, giữ đúng phong cách, giọng văn và quy tắc đã áp dụng ở các lượt trước:\n\nInput:\n${inputJson}`;
 
-        const parsed = JSON.parse(jsonSlice);
-        const items = Array.isArray(parsed) ? parsed : (parsed.response || []);
+            contents.push({ role: 'user', parts: [{ text: userText }] });
 
-        const map = {};
-        items.forEach((item) => {
-            if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
-                map[item.original] = item.translated;
-            }
-        });
+            const rawText = await requestGemmaBatchFromContentScript(contents);
+            const items = parseGemmaRawText(rawText);
+
+            items.forEach((item) => {
+                if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
+                    map[item.original] = item.translated;
+                }
+            });
+
+            // Đưa câu trả lời của model vào lịch sử để lượt kế tiếp giữ ngữ cảnh.
+            contents.push({ role: 'model', parts: [{ text: rawText }] });
+        }
         return map;
     } catch (err) {
         console.error('[Gemma] Lỗi khi dịch theo lô:', err);

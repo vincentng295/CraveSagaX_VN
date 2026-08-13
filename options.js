@@ -407,22 +407,37 @@ document.addEventListener('DOMContentLoaded', () => {
         return chunks;
     }
 
-    // Gọi Gemma/Gemini API trực tiếp cho 1 lô câu thoại, trả về map { original: translated }.
-    async function callGemmaBatchDirect(items, apiKey) {
-        if (!items.length) return {};
+    // Số câu thoại tối đa mỗi lượt (turn) gửi lên Gemma trong 1 "phiên" dịch. Thay vì
+    // nhồi cả lô (vd. 200 câu) vào 1 request duy nhất, ta tách thành từng lô nhỏ 40
+    // câu và gửi nối tiếp dưới dạng nhiều turn trong CÙNG một conversation (turn sau
+    // kèm theo toàn bộ turn trước làm lịch sử) — giảm độ trễ/khả năng timeout của 1
+    // request quá lớn, đồng thời model vẫn giữ ngữ cảnh xuyên suốt nhờ thấy lại các
+    // cặp user/model của những lô trước. Gemma hỗ trợ tới ~256k token nên hầu như
+    // không có nguy cơ vượt giới hạn context dù nối nhiều lượt.
+    const GEMMA_DIALOG_CHUNK_SIZE = 40;
 
-        const promptText = `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${JSON.stringify(items.map((it) => ({ original: it.text, name: it.speaker || null })))}`;
-        // Dùng streamGenerateContent (SSE) thay vì generateContent: với lô 200 câu
-        // thoại, generateContent giữ kết nối im lặng tới khi có response hoàn chỉnh,
-        // dễ bị coi là treo và tự huỷ ("Failed to fetch"). streamGenerateContent trả
-        // dữ liệu ngay khi có chunk đầu tiên nên connection luôn "sống".
+    function buildDialogChunks(items, size) {
+        const chunks = [];
+        for (let i = 0; i < items.length; i += size) {
+            chunks.push(items.slice(i, i + size));
+        }
+        return chunks;
+    }
+
+    // Gửi 1 turn (kèm nguyên lịch sử "contents" trước đó) tới Gemma qua
+    // streamGenerateContent (SSE) và trả về rawText đã gộp từ các chunk stream.
+    // Dùng SSE thay vì generateContent thường: generateContent giữ kết nối im lặng
+    // tới khi có response hoàn chỉnh, dễ bị coi là treo và tự huỷ ("Failed to
+    // fetch"), trong khi streamGenerateContent trả dữ liệu ngay khi có chunk đầu
+    // tiên nên connection luôn "sống".
+    async function sendGemmaTurn(contents, apiKey) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ID}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
 
         const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ role: 'user', parts: [{ text: promptText }] }],
+                contents,
                 generationConfig: {
                     temperature: 0.35,
                     responseMimeType: 'application/json',
@@ -482,6 +497,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (buffer.trim()) consumeSseEvent(buffer);
 
+        return rawText;
+    }
+
+    function parseGemmaRawText(rawText) {
         const jsonStart = rawText.indexOf('{');
         const jsonEnd = rawText.lastIndexOf('}');
         const jsonSlice = (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart)
@@ -489,14 +508,42 @@ document.addEventListener('DOMContentLoaded', () => {
             : rawText;
 
         const parsed = JSON.parse(jsonSlice);
-        const responseItems = Array.isArray(parsed) ? parsed : (parsed.response || []);
+        return Array.isArray(parsed) ? parsed : (parsed.response || []);
+    }
 
+    // Gọi Gemma/Gemini API trực tiếp cho 1 lô câu thoại, trả về map { original: translated }.
+    // Bên trong tự tách "items" thành các turn 40 câu, gửi nối tiếp trong cùng 1
+    // conversation (xem GEMMA_DIALOG_CHUNK_SIZE ở trên) thay vì gửi 1 request duy nhất.
+    async function callGemmaBatchDirect(items, apiKey) {
+        if (!items.length) return {};
+
+        const chunks = buildDialogChunks(items, GEMMA_DIALOG_CHUNK_SIZE);
+        const contents = [];
         const map = {};
-        responseItems.forEach((item) => {
-            if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
-                map[item.original] = item.translated;
-            }
-        });
+
+        for (let i = 0; i < chunks.length; i++) {
+            const chunk = chunks[i];
+            const inputJson = JSON.stringify(chunk.map((it) => ({ original: it.text, name: it.speaker || null })));
+
+            const userText = (i === 0)
+                ? `${GEMINI_SYSTEM_INSTRUCTION}\n\nInput:\n${inputJson}`
+                : `Dịch tiếp danh sách câu thoại sau, giữ đúng phong cách, giọng văn và quy tắc đã áp dụng ở các lượt trước:\n\nInput:\n${inputJson}`;
+
+            contents.push({ role: 'user', parts: [{ text: userText }] });
+
+            const rawText = await sendGemmaTurn(contents, apiKey);
+            const responseItems = parseGemmaRawText(rawText);
+
+            responseItems.forEach((item) => {
+                if (item && typeof item.original === 'string' && typeof item.translated === 'string') {
+                    map[item.original] = item.translated;
+                }
+            });
+
+            // Đưa câu trả lời của model vào lịch sử để turn kế tiếp giữ ngữ cảnh.
+            contents.push({ role: 'model', parts: [{ text: rawText }] });
+        }
+
         return map;
     }
 
