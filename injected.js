@@ -1,7 +1,7 @@
 let is_translated = 1;
 let customTranslationDict = {};
-window.translateEngine = 'google'; // 'google' | 'gemma'
-window.geminiApiKey = '';
+let translateEngine = 'google'; // 'google' | 'gemma'
+let geminiApiKey = '';
 
 /**
  * ==== Toast báo trạng thái đang dịch bằng Gemma ====
@@ -169,14 +169,14 @@ function escapeUnescapedQuotes(text) {
 
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
-        window.is_translated = event.data.enabled ? 1 : 0;
+        is_translated = event.data.enabled ? 1 : 0;
     }
 });
 
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_ENGINE_UPDATE') {
-        window.translateEngine = event.data.engine === 'gemma' ? 'gemma' : 'google';
-        window.geminiApiKey = event.data.apiKey || '';
+        translateEngine = event.data.engine === 'gemma' ? 'gemma' : 'google';
+        geminiApiKey = event.data.apiKey || '';
     }
 });
 
@@ -255,7 +255,7 @@ function requestGemmaBatchFromContentScript(contents) {
         window.postMessage({
             type: 'GEMMA_BATCH_REQUEST',
             requestId,
-            apiKey: window.geminiApiKey,
+            apiKey: geminiApiKey,
             modelId: GEMINI_MODEL_ID,
             contents
         }, '*');
@@ -295,7 +295,7 @@ function parseGemmaRawText(rawText) {
 
 async function callGemmaBatch(uniqueItems) {
     if (!uniqueItems.length) return {};
-    if (!window.geminiApiKey) {
+    if (!geminiApiKey) {
         console.warn('[Gemma] Thiếu API Key, bỏ qua dịch lô.');
         return {};
     }
@@ -342,13 +342,13 @@ async function callGemmaBatch(uniqueItems) {
 
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
-        window.customTranslationDict = event.data.dict || {};
+        customTranslationDict = event.data.dict || {};
     }
 });
 
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
-        window.customTranslationDict = event.data.dict || {};
+        customTranslationDict = event.data.dict || {};
         
         // Xóa cache dịch tạm thời để bắt buộc dùng từ điển mới nhập vào
         if (typeof translationCache !== 'undefined' && translationCache instanceof Map) {
@@ -462,13 +462,13 @@ window.addEventListener('message', (event) => {
         }
 
         async function translateText(text) {
-            if (!window.is_translated) return text;
+            if (!is_translated) return text;
             if (!text || !text.trim()) return text;
             const cleanText = text.trim();
             const seq = nextTranslationSeq();
 
-            if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
-                const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
+            if (customTranslationDict && customTranslationDict[cleanText]) {
+                const dictValue = extractTranslatedValue(customTranslationDict[cleanText]);
                 if (dictValue) return dictValue;
             }
 
@@ -573,7 +573,7 @@ window.addEventListener('message', (event) => {
 
                 originalSet.call(this, val);
 
-                if (!window.is_translated || !val || typeof val !== 'string' || !isDialogueText(val)) return;
+                if (!is_translated || !val || typeof val !== 'string' || !isDialogueText(val)) return;
 
                 if (debounceMap.has(this)) {
                     clearTimeout(debounceMap.get(this));
@@ -581,7 +581,7 @@ window.addEventListener('message', (event) => {
 
                 debounceMap.set(this, setTimeout(async () => {
                     let translatedText = await translateText(val);
-                    if (!translatedText || !window.is_translated) return;
+                    if (!translatedText || !is_translated) return;
                     fixAndRewrap(labelInstance, translatedText);
                 }, 150));
             },
@@ -633,15 +633,15 @@ window.addEventListener('message', (event) => {
         const seq = nextTranslationSeq();
         const cleanText = text.replace(/\\,/g, ',');
 
-        if (window.customTranslationDict && window.customTranslationDict[cleanText]) {
-            const dictValue = extractTranslatedValue(window.customTranslationDict[cleanText]);
+        if (customTranslationDict && customTranslationDict[cleanText]) {
+            const dictValue = extractTranslatedValue(customTranslationDict[cleanText]);
             if (dictValue) {
                 const customResult = escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,');
                 return interleaveMarkers(customResult);
             }
         }
 
-        if (window.translateEngine === 'gemma' && currentGemmaBatchResults && currentGemmaBatchResults.has(cleanText)) {
+        if (translateEngine === 'gemma' && currentGemmaBatchResults && currentGemmaBatchResults.has(cleanText)) {
             const translated = currentGemmaBatchResults.get(cleanText);
             if (translated) {
                 const result = escapeUnescapedQuotes(translated).replace(/,/g, '\\,');
@@ -779,7 +779,7 @@ window.addEventListener('message', (event) => {
         function needsTranslation(rawField) {
             const cleanText = rawField.replace(/\\,/g, ',');
             if (!cleanText.trim()) return null;
-            if (window.customTranslationDict && window.customTranslationDict[cleanText]) return null;
+            if (customTranslationDict && customTranslationDict[cleanText]) return null;
             if (translateCache.has(cleanText)) return null;
             return cleanText;
         }
@@ -813,7 +813,7 @@ window.addEventListener('message', (event) => {
         const lines = rawScript.split('\n');
         let currentSpeaker = null;
 
-        if (window.translateEngine === 'gemma') {
+        if (translateEngine === 'gemma') {
             const uniqueItems = collectUntranslatedTexts(lines);
             console.log(`[Gemma] Gộp ${uniqueItems.length} câu chưa dịch của "${fileName || ''}" vào 1 request...`);
             if (uniqueItems.length > 0) {
@@ -986,7 +986,7 @@ window.addEventListener('message', (event) => {
                 window.postMessage({ type: 'GAME_CHAP_OPENED', chap: st.fileName }, '*');
             }
 
-            if (!window.is_translated) {
+            if (!is_translated) {
                 console.log(`[Story Intercepted] ${st.fileName || ''} — dịch tắt, dùng bản gốc`);
                 st.translatedText = rawText;
                 dispatchRealEvent(this, evt);
