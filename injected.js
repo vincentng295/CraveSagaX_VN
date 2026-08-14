@@ -143,7 +143,7 @@ function interleaveMarkers(text) {
     if (typeof text !== 'string' || !text) return text;
 
     // Bọc mọi chuỗi không chứa khoảng trắng ([^\s]+) bằng TRANSLATED_MARKER
-    return text.replace(/[^\s]+/g, TRANSLATED_MARKER + '$&' + TRANSLATED_MARKER);
+    return text.replace(/[^\s]+/g, TRANSLATED_MARKER + '$&') + TRANSLATED_MARKER;
 }
 
 /**
