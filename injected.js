@@ -809,6 +809,33 @@ window.addEventListener('message', (event) => {
         return Array.from(collectedMap.entries()).map(([text, speaker]) => ({ text, speaker }));
     }
 
+    // Dịch 1 lô câu thoại bằng Gemma, KHÔNG âm thầm fallback về Google Dịch khi
+    // gặp lỗi. Khi lỗi xảy ra, hỏi người chơi qua confirm(): OK = thử lại bằng
+    // Gemma, Hủy = chuyển tạm sang Google Dịch cho các câu của file này. Khi dịch
+    // thành công, báo cho người chơi biết bằng alert().
+    async function translateBatchWithGemmaConfirm(uniqueItems) {
+        while (true) {
+            showGemmaToast(`Đang dịch ${uniqueItems.length} câu bằng Gemma...`);
+            try {
+                const map = await callGemmaBatch(uniqueItems);
+                hideGemmaToast();
+                alert('Dịch hoàn tất! Mời bạn thưởng thức câu chuyện.');
+                return new Map(Object.entries(map));
+            } catch (err) {
+                hideGemmaToast();
+                const wantsRetry = confirm(
+                    `Gemma lỗi: ${extractApiErrorMessage(err.message)}.\n\n` +
+                    `Bấm OK để THỬ LẠI bằng Gemma, hoặc bấm Hủy để chuyển tạm sang Google Dịch cho phần này.`
+                );
+                if (!wantsRetry) {
+                    showGemmaErrorToast('Đang chuyển tạm sang Google Dịch...');
+                    return new Map();
+                }
+                // Người dùng chọn thử lại -> lặp lại vòng while, gọi callGemmaBatch lần nữa.
+            }
+        }
+    }
+
     async function processStoryScript(rawScript, fileName = null) {
         const lines = rawScript.split('\n');
         let currentSpeaker = null;
@@ -817,20 +844,7 @@ window.addEventListener('message', (event) => {
             const uniqueItems = collectUntranslatedTexts(lines);
             console.log(`[Gemma] Gộp ${uniqueItems.length} câu chưa dịch của "${fileName || ''}" vào 1 request...`);
             if (uniqueItems.length > 0) {
-                showGemmaToast(`Đang dịch ${uniqueItems.length} câu bằng Gemma...`);
-                try {
-                    currentGemmaBatchResults = new Map(Object.entries(await callGemmaBatch(uniqueItems)));
-                } catch (err) {
-                    // Gemma lỗi (vd: 503 quá tải) -> báo cho người chơi biết và tự động
-                    // fallback về Google Dịch cho các câu của file này (Map rỗng khiến
-                    // translateSingleText() rơi xuống nhánh Google Dịch bên dưới).
-                    currentGemmaBatchResults = new Map();
-                    showGemmaErrorToast(
-                        `Gemma lỗi: ${extractApiErrorMessage(err.message)}. Đang chuyển tạm sang Google Dịch...`
-                    );
-                } finally {
-                    hideGemmaToast();
-                }
+                currentGemmaBatchResults = await translateBatchWithGemmaConfirm(uniqueItems);
             } else {
                 currentGemmaBatchResults = new Map();
             }
