@@ -281,3 +281,7 @@ const qrImage = document.getElementById('donation-qr');
 if (qrImage) {
   qrImage.src = chrome.runtime.getURL('images/donation-qr.png');
 }
+
+document.getElementById('btn-get-api-key').addEventListener('click', () => {
+  chrome.tabs.create({ url: 'https://aistudio.google.com/app/api-keys?auto_close=1' });
+});
