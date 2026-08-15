@@ -929,6 +929,9 @@ window.addEventListener('message', (event) => {
             // Lấy tên file .txt từ URL
             st.fileName = url.split('/').pop();
         }
+        // readStory trả về mảng {md5, resourcePath, path,...} -> dùng để tự
+        // động điền remark (tên gợi nhớ) cho chap md5.txt tương ứng.
+        st.isReadStory = typeof url === 'string' && url.indexOf('/readStory') !== -1;
         return rawOpen.call(this, method, url, ...rest);
     };
     mark(XMLHttpRequest.prototype.open, "function open() { [native code] }");
@@ -979,6 +982,29 @@ window.addEventListener('message', (event) => {
 
         rawAddEventListener.call(this, 'readystatechange', (evt) => {
             if (this.readyState !== 4) return;
+
+            if (st.isReadStory && !st.readStoryHandled && (this.status === 200 || this.status === 0)) {
+                st.readStoryHandled = true;
+                try {
+                    const rawText = originalResponseTextDesc.get.call(this);
+                    const data = JSON.parse(rawText);
+                    if (Array.isArray(data.resources)) {
+                        const map = {};
+                        data.resources.forEach((item) => {
+                            if (item && item.md5 && item.resourcePath) {
+                                console.log("readStory", item.md5 + '.txt', '->', item.resourcePath);
+                                map[item.md5 + '.txt'] = item.resourcePath;
+                            }
+                        });
+                        if (Object.keys(map).length) {
+                            window.postMessage({ type: 'STORY_RESOURCE_MAP_UPDATE', map }, '*');
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[ReadStory] Không parse được response:', e);
+                }
+                // Không đụng vào response, chỉ "nghe lén" -> để luồng dispatch bình thường xử lý tiếp.
+            }
 
             if (!st.isStoryFile || (this.status !== 200 && this.status !== 0)) {
                 dispatchRealEvent(this, evt);

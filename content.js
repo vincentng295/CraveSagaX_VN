@@ -167,6 +167,41 @@ function saveStoryFileCache(fileName, patch) {
     }));
 }
 
+// ==== Tự động điền chapRemarks từ resourcePath lấy được qua hook /readStory ====
+// (vd file "52baa3e4...txt" -> remark "chara010201_01"). Chỉ điền cho những
+// chap CHƯA có remark, để không ghi đè remark người dùng đã tự đặt tay.
+let resourceMapWriteChain = Promise.resolve();
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'STORY_RESOURCE_MAP_UPDATE' && event.data.map) {
+        const incomingMap = event.data.map;
+        resourceMapWriteChain = resourceMapWriteChain.then(() => new Promise((resolve) => {
+            chrome.storage.local.get({ chapRemarks: {} }, (result) => {
+                const chapRemarks = result.chapRemarks || {};
+                let changed = false;
+
+                Object.keys(incomingMap).forEach((fileName) => {
+                    if (!chapRemarks[fileName] || !chapRemarks[fileName].trim()) {
+                        chapRemarks[fileName] = incomingMap[fileName];
+                        changed = true;
+                    }
+                });
+
+                if (!changed) { resolve(); return; }
+
+                chrome.storage.local.set({ chapRemarks }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error('[ReadStory] Lỗi lưu chapRemarks:', chrome.runtime.lastError.message);
+                    } else {
+                        console.log('[ReadStory] Đã tự động điền remark cho', Object.keys(incomingMap).length, 'chap.');
+                    }
+                    resolve();
+                });
+            });
+        }));
+    }
+});
+
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'STORY_FILE_RAW_CACHE' && event.data.fileName) {
         saveStoryFileCache(event.data.fileName, { original: event.data.original || '' });
