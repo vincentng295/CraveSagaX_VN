@@ -996,8 +996,18 @@ window.addEventListener('message', (event) => {
 
             // Một số file script (vd: synopsis) không chứa lời thoại (name,/msg,/select,)
             // -> bỏ qua, không báo GAME_CHAP_OPENED để tránh nhận nhầm là chap đang chơi.
-            if (st.fileName && hasDialogueContent(rawText)) {
+            if (!hasDialogueContent(rawText)) {
+                console.log(`[Story Intercepted] ${st.fileName || ''} — không có lời thoại, bỏ qua dịch`);
+                dispatchRealEvent(this, evt);
+                return;
+            }
+
+            if (st.fileName) {
                 window.postMessage({ type: 'GAME_CHAP_OPENED', chap: st.fileName }, '*');
+                // Cache nguyên văn bản gốc (.txt) của chap này, đúng thứ tự dòng,
+                // để export .doc sau này không phải dựa vào translationDict (rời rạc,
+                // có thể sai thứ tự hoặc thiếu câu do câu đã được dịch ở chap khác).
+                window.postMessage({ type: 'STORY_FILE_RAW_CACHE', fileName: st.fileName, original: rawText }, '*');
             }
 
             if (!is_translated) {
@@ -1013,6 +1023,11 @@ window.addEventListener('message', (event) => {
                 .then((result) => {
                     st.translatedText = result;
                     console.log("Dịch xong:", result.substring(0, 150) + "...");
+                    // Cache nguyên văn bản đã dịch (đúng thứ tự dòng) cho chap này,
+                    // dùng để export .doc bản tiếng Việt.
+                    if (st.fileName) {
+                        window.postMessage({ type: 'STORY_FILE_TRANSLATED_CACHE', fileName: st.fileName, translated: result }, '*');
+                    }
                 })
                 .catch((err) => {
                     console.error("Lỗi dịch, dùng bản gốc:", err);

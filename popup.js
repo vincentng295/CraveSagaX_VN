@@ -83,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chapEmptyMsg = document.getElementById('chap-empty-msg');
     const currentChapRemarkInput = document.getElementById('current-chap-remark');
     const btnChapSave = document.getElementById('btn-chap-save');
+    const btnExportDoc = document.getElementById('btn-export-doc');
 
     let latestChap = null;
 
@@ -141,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!latestChap) {
                     currentChapFileEl.textContent = '—';
                     chapRemarkRow.style.display = 'none';
+                    if (btnExportDoc) btnExportDoc.style.display = 'none';
                     chapEmptyMsg.style.display = 'block';
                     return;
                 }
@@ -150,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentChapFileEl.textContent = latestChap;
                 currentChapFileEl.title = latestChap;
                 currentChapRemarkInput.value = chapRemarks[latestChap] || '';
+                if (btnExportDoc) btnExportDoc.style.display = 'block';
             }
         );
     }
@@ -284,4 +287,152 @@ if (qrImage) {
 
 document.getElementById('btn-get-api-key').addEventListener('click', () => {
   chrome.tabs.create({ url: 'https://aistudio.google.com/app/api-keys?auto_close=1' });
+});
+
+// ==== Export hội thoại của chap đang chơi ra .doc (EN + VI nếu đã dịch) ====
+// Dựa vào storyFileCache (toàn văn .txt gốc/đã dịch, cache đúng thứ tự dòng khi
+// injected.js chặn XHR), KHÔNG dùng translationDict vì dict lưu theo câu rời rạc,
+// không giữ thứ tự và có thể thiếu câu (câu trùng đã được ghi nhận ở 1 chap khác).
+
+const FEFF_REGEX_EXPORT = /\uFEFF/g;
+const MSG_LINE_REGEX_EXPORT = /^(msg,\d+,\s*(?:<size=\d+>)?)((?:\\,|[^<,])*)((?:<\/size>)?,.*)$/;
+
+function splitUnescapedCommaExport(str) {
+    const parts = [];
+    let current = '';
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === '\\' && str[i + 1] === ',') {
+            current += '\\,';
+            i++;
+        } else if (str[i] === ',') {
+            parts.push(current);
+            current = '';
+        } else {
+            current += str[i];
+        }
+    }
+    parts.push(current);
+    return parts;
+}
+
+function cleanDisplayTextExport(text) {
+    return (text || '')
+        .replace(FEFF_REGEX_EXPORT, '')   // bỏ marker "đã dịch" (zero-width)
+        .replace(/\\,/g, ',')             // un-escape dấu phẩy
+        .trim();
+}
+
+function extractSpeakerNameExport(line) {
+    const fields = splitUnescapedCommaExport(line);
+    const raw = (fields[1] || '').replace(/<[^>]*>/g, '');
+    return cleanDisplayTextExport(raw) || null;
+}
+
+// Parse toàn văn 1 file .txt kịch bản game thành danh sách thoại theo đúng thứ tự.
+function parseStoryScriptForExport(rawText) {
+    if (!rawText) return [];
+    const lines = rawText.split('\n');
+    let currentSpeaker = null;
+    const entries = [];
+
+    lines.forEach((rawLine) => {
+        const line = rawLine.replace(/\r$/, '');
+        if (line.startsWith('name,')) {
+            currentSpeaker = extractSpeakerNameExport(line);
+            return;
+        }
+        if (line.startsWith('msg,')) {
+            const match = line.match(MSG_LINE_REGEX_EXPORT);
+            if (!match || !match[2] || !match[2].trim()) return;
+            const text = cleanDisplayTextExport(match[2]);
+            if (text) entries.push({ speaker: currentSpeaker, text });
+            return;
+        }
+        if (line.startsWith('select,')) {
+            const fields = splitUnescapedCommaExport(line);
+            const options = fields.slice(1).map(cleanDisplayTextExport).filter(Boolean);
+            if (options.length) {
+                entries.push({ speaker: null, text: `[Lựa chọn] ${options.join('  /  ')}` });
+            }
+        }
+    });
+
+    return entries;
+}
+
+function escapeHtmlExport(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// Sinh file .doc (Word đọc được) từ danh sách dòng thoại dạng "Tên: nội dung".
+function buildWordDocBlob(title, dialogueLines) {
+    const bodyHtml = dialogueLines
+        .map((line) => `<p style="margin:0 0 8px 0; font-family:Calibri, Arial, sans-serif; font-size:12pt;">${escapeHtmlExport(line)}</p>`)
+        .join('\n');
+
+    const html = `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${escapeHtmlExport(title)}</title></head>
+<body>
+<h2 style="font-family:Calibri, Arial, sans-serif;">${escapeHtmlExport(title)}</h2>
+${bodyHtml}
+</body>
+</html>`;
+
+    return new Blob(['\ufeff', html], { type: 'application/msword' });
+}
+
+function downloadBlobExport(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+document.getElementById('btn-export-doc')?.addEventListener('click', (e) => {
+    const btn = e.currentTarget;
+    const originalLabel = btn.innerText;
+
+    chrome.storage.local.get({ storyFileCache: {}, currentChap: null, chapRemarks: {} }, (result) => {
+        const currentChap = result.currentChap && result.currentChap.chap;
+        if (!currentChap) {
+            alert('Không xác định được chap đang chơi.');
+            return;
+        }
+
+        const cache = result.storyFileCache || {};
+        const entry = cache[currentChap];
+
+        if (!entry || !entry.original) {
+            alert('Chưa có dữ liệu gốc của chap này trong cache.\nHãy mở lại chap đó trong game rồi thử xuất lại.');
+            return;
+        }
+
+        const remark = (result.chapRemarks || {})[currentChap];
+        const baseName = (remark || currentChap.replace(/\.txt$/i, '')).replace(/[\\/:*?"<>|]/g, '_');
+
+        const enEntries = parseStoryScriptForExport(entry.original);
+        if (enEntries.length === 0) {
+            alert('Không tìm thấy hội thoại nào trong chap này.');
+            return;
+        }
+        const enLines = enEntries.map((it) => (it.speaker ? `${it.speaker}: ${it.text}` : it.text));
+        downloadBlobExport(buildWordDocBlob(`${currentChap} (English)`, enLines), `${baseName}_EN.doc`);
+
+        if (entry.translated) {
+            const viEntries = parseStoryScriptForExport(entry.translated);
+            const viLines = viEntries.map((it) => (it.speaker ? `${it.speaker}: ${it.text}` : it.text));
+            downloadBlobExport(buildWordDocBlob(`${currentChap} (Tiếng Việt)`, viLines), `${baseName}_VI.doc`);
+        }
+
+        btn.innerText = '✓ Đã xuất file';
+        setTimeout(() => { btn.innerText = originalLabel; }, 1500);
+    });
 });

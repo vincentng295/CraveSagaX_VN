@@ -124,6 +124,61 @@ window.addEventListener('message', (event) => {
     }
 });
 
+// ==== Cache toàn văn (nguyên thứ tự dòng) .txt gốc + bản dịch theo từng chap ====
+// Dùng riêng cho tính năng Export .doc, KHÔNG dùng translationDict vì dict lưu
+// theo câu rời rạc, không giữ thứ tự và có thể thiếu câu (câu đã dịch ở chap khác).
+const STORY_FILE_CACHE_MAX_ENTRIES = 30;
+
+let storyCacheWriteChain = Promise.resolve();
+
+function saveStoryFileCache(fileName, patch) {
+    if (!fileName) return;
+    // Nối tiếp các lần ghi (thay vì get/set song song) để tránh 2 message
+    // (raw + translated) đến gần như cùng lúc đọc cùng 1 state cũ rồi ghi đè
+    // lẫn nhau, làm mất field vừa được lưu bởi lần ghi kia.
+    storyCacheWriteChain = storyCacheWriteChain.then(() => new Promise((resolve) => {
+        chrome.storage.local.get({ storyFileCache: {} }, (result) => {
+            const cache = result.storyFileCache || {};
+            cache[fileName] = {
+                ...(cache[fileName] || {}),
+                ...patch,
+                time: Math.floor(Date.now() / 1000)
+            };
+
+            // Giới hạn số chap được cache để tránh phình storage: giữ lại các entry
+            // mới nhất theo "time" khi vượt quá ngưỡng.
+            const keys = Object.keys(cache);
+            if (keys.length > STORY_FILE_CACHE_MAX_ENTRIES) {
+                keys
+                    .sort((a, b) => (cache[a].time || 0) - (cache[b].time || 0))
+                    .slice(0, keys.length - STORY_FILE_CACHE_MAX_ENTRIES)
+                    .forEach((k) => delete cache[k]);
+            }
+
+            chrome.storage.local.set({ storyFileCache: cache }, () => {
+                if (chrome.runtime.lastError) {
+                    console.error('[StoryFileCache] Lỗi lưu cache:', chrome.runtime.lastError.message, 'file:', fileName);
+                } else {
+                    console.log('[StoryFileCache] Đã cache', fileName, Object.keys(patch));
+                }
+                resolve();
+            });
+        });
+    }));
+}
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'STORY_FILE_RAW_CACHE' && event.data.fileName) {
+        saveStoryFileCache(event.data.fileName, { original: event.data.original || '' });
+    }
+});
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'STORY_FILE_TRANSLATED_CACHE' && event.data.fileName) {
+        saveStoryFileCache(event.data.fileName, { translated: event.data.translated || '' });
+    }
+});
+
 window.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SAVE_NEW_TRANSLATION') {
         if (event.data.chap) updateCurrentChap(event.data.chap);
