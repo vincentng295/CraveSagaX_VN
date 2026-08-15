@@ -1,3 +1,60 @@
+// ==== Kênh riêng (MessageChannel) với content.js — xem giải thích đầy đủ ở
+// đầu content.js. Tóm tắt: content.js tạo 1 MessageChannel, giữ port1, và
+// chuyển port2 sang đây bằng đúng 1 lần window.postMessage (không mang dữ
+// liệu, chỉ mang cái port rỗng). Từ đó về sau, MỌI trao đổi giữa injected.js
+// <-> content.js đều đi qua port này — không còn dùng window.postMessage
+// nữa nên trang game (hay bất kỳ script nào khác gắn 'message' listener lên
+// window) không nghe/xem được nội dung trao đổi giữa 2 phía nữa.
+let __extPort = null;
+const __pendingOutMessages = [];
+const __portMessageHandlers = [];
+
+function sendToExtension(data) {
+    if (__extPort) {
+        __extPort.postMessage(data);
+    } else {
+        // Port chưa sẵn sàng (cực hiếm, chỉ trong khoảnh khắc đầu tiên lúc
+        // script vừa chạy) -> xếp hàng, gửi bù ngay khi port init xong.
+        __pendingOutMessages.push(data);
+    }
+}
+
+// Đăng ký lắng nghe message từ content.js. Trả về hàm "off" để hủy đăng ký
+// (dùng cho các handler chỉ cần dùng 1 lần, như request/response của Gemma).
+function onExtensionMessage(fn) {
+    __portMessageHandlers.push(fn);
+    return function off() {
+        const idx = __portMessageHandlers.indexOf(fn);
+        if (idx !== -1) __portMessageHandlers.splice(idx, 1);
+    };
+}
+
+// Lắng nghe (chỉ) message khởi tạo port, ở capture phase để có cơ hội chạy
+// trước các listener khác nếu lỡ có script nào đó cũng đang nghe 'message'
+// trên window ngay từ document_start. Sau khi lấy được port, gỡ listener
+// này đi ngay — từ đó window.postMessage không còn được dùng để trao đổi dữ
+// liệu thật giữa injected.js và content.js nữa.
+window.addEventListener('message', function __onExtPortInit(event) {
+    if (event.source !== window) return;
+    if (!event.data || event.data.type !== '__EXT_PORT_INIT__') return;
+    if (!event.ports || !event.ports[0]) return;
+
+    event.stopImmediatePropagation();
+    window.removeEventListener('message', __onExtPortInit, true);
+
+    __extPort = event.ports[0];
+    __extPort.addEventListener('message', (e) => {
+        __portMessageHandlers.forEach((fn) => {
+            try { fn(e); } catch (err) { console.error(err); }
+        });
+    });
+    __extPort.start();
+
+    while (__pendingOutMessages.length) {
+        __extPort.postMessage(__pendingOutMessages.shift());
+    }
+}, true);
+
 let is_translated = 1;
 let customTranslationDict = {};
 let translateEngine = 'google'; // 'google' | 'gemma'
@@ -167,13 +224,13 @@ function escapeUnescapedQuotes(text) {
     return text.replace(/\\?"/g, (m) => (m === '"' ? '\\"' : m));
 }
 
-window.addEventListener('message', (event) => {
+onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         is_translated = event.data.enabled ? 1 : 0;
     }
 });
 
-window.addEventListener('message', (event) => {
+onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_ENGINE_UPDATE') {
         translateEngine = event.data.engine === 'gemma' ? 'gemma' : 'google';
         geminiApiKey = event.data.apiKey || '';
@@ -226,7 +283,7 @@ function requestGemmaBatchFromContentScript(contents) {
         const requestId = 'gemma_' + Date.now() + '_' + (++__gemmaReqCounter);
 
         const timeoutId = setTimeout(() => {
-            window.removeEventListener('message', handler);
+            offHandler();
             reject(new Error('Timeout chờ phản hồi từ content script (10 phút)'));
         }, 600000);
 
@@ -243,7 +300,7 @@ function requestGemmaBatchFromContentScript(contents) {
 
             if (!event.data.type || event.data.type !== 'GEMMA_BATCH_RESULT') return;
             clearTimeout(timeoutId);
-            window.removeEventListener('message', handler);
+            offHandler();
             if (event.data.error) {
                 reject(new Error(event.data.error));
             } else {
@@ -251,14 +308,14 @@ function requestGemmaBatchFromContentScript(contents) {
             }
         }
 
-        window.addEventListener('message', handler);
-        window.postMessage({
+        const offHandler = onExtensionMessage(handler);
+        sendToExtension({
             type: 'GEMMA_BATCH_REQUEST',
             requestId,
             apiKey: geminiApiKey,
             modelId: GEMINI_MODEL_ID,
             contents
-        }, '*');
+        });
     });
 }
 
@@ -340,13 +397,13 @@ async function callGemmaBatch(uniqueItems) {
     }
 }
 
-window.addEventListener('message', (event) => {
+onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
         customTranslationDict = event.data.dict || {};
     }
 });
 
-window.addEventListener('message', (event) => {
+onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_DICT_UPDATE') {
         customTranslationDict = event.data.dict || {};
         
@@ -646,14 +703,14 @@ window.addEventListener('message', (event) => {
             if (translated) {
                 const result = escapeUnescapedQuotes(translated).replace(/,/g, '\\,');
                 translateCache.set(cleanText, result);
-                window.postMessage({
+                sendToExtension({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
                     translated,
                     speaker: speakerName || undefined,
                     chap: fileName || undefined,
                     seq
-                }, '*');
+                });
                 return interleaveMarkers(result);
             }
         }
@@ -661,14 +718,14 @@ window.addEventListener('message', (event) => {
         if (translateCache.has(cleanText)) {
             const cached = translateCache.get(cleanText);
             if (cached) {
-                window.postMessage({
+                sendToExtension({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
                     translated: cached,
                     speaker: speakerName || undefined,
                     chap: fileName || undefined,
                     seq
-                }, '*');
+                });
                 return interleaveMarkers(cached);
             }
             return text;
@@ -686,14 +743,14 @@ window.addEventListener('message', (event) => {
                 
                 translateCache.set(cleanText, result); 
 
-                window.postMessage({
+                sendToExtension({
                     type: 'SAVE_NEW_TRANSLATION',
                     original: cleanText,
                     translated: translated,
                     speaker: speakerName || undefined,
                     chap: fileName || undefined,
                     seq
-                }, '*');
+                });
 
                 return interleaveMarkers(result); 
             }
@@ -701,14 +758,14 @@ window.addEventListener('message', (event) => {
             console.error(`[Network Error] "${cleanText}":`, err);
         }
 
-        window.postMessage({
+        sendToExtension({
             type: 'SAVE_NEW_TRANSLATION',
             original: cleanText,
             translated: '',
             speaker: speakerName || undefined,
             chap: fileName || undefined,
             seq
-        }, '*');
+        });
 
         return text;
     }
@@ -997,7 +1054,7 @@ window.addEventListener('message', (event) => {
                             }
                         });
                         if (Object.keys(map).length) {
-                            window.postMessage({ type: 'STORY_RESOURCE_MAP_UPDATE', map }, '*');
+                            sendToExtension({ type: 'STORY_RESOURCE_MAP_UPDATE', map });
                         }
                     }
                 } catch (e) {
@@ -1029,11 +1086,11 @@ window.addEventListener('message', (event) => {
             }
 
             if (st.fileName) {
-                window.postMessage({ type: 'GAME_CHAP_OPENED', chap: st.fileName }, '*');
+                sendToExtension({ type: 'GAME_CHAP_OPENED', chap: st.fileName });
                 // Cache nguyên văn bản gốc (.txt) của chap này, đúng thứ tự dòng,
                 // để export .doc sau này không phải dựa vào translationDict (rời rạc,
                 // có thể sai thứ tự hoặc thiếu câu do câu đã được dịch ở chap khác).
-                window.postMessage({ type: 'STORY_FILE_RAW_CACHE', fileName: st.fileName, original: rawText }, '*');
+                sendToExtension({ type: 'STORY_FILE_RAW_CACHE', fileName: st.fileName, original: rawText });
             }
 
             if (!is_translated) {
@@ -1052,7 +1109,7 @@ window.addEventListener('message', (event) => {
                     // Cache nguyên văn bản đã dịch (đúng thứ tự dòng) cho chap này,
                     // dùng để export .doc bản tiếng Việt.
                     if (st.fileName) {
-                        window.postMessage({ type: 'STORY_FILE_TRANSLATED_CACHE', fileName: st.fileName, translated: result }, '*');
+                        sendToExtension({ type: 'STORY_FILE_TRANSLATED_CACHE', fileName: st.fileName, translated: result });
                     }
                 })
                 .catch((err) => {
