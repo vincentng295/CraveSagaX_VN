@@ -19,6 +19,7 @@
   "options_page": "options.html",
   "permissions": [
     "storage",
+    "unlimitedStorage",
     "activeTab"
   ],
   "host_permissions": [

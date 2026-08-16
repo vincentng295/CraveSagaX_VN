@@ -157,6 +157,44 @@ const STORY_FILE_CACHE_MAX_ENTRIES = 30;
 
 let storyCacheWriteChain = Promise.resolve();
 
+// Số entry sẽ bị cắt bớt mỗi lần gặp lỗi quota, để thử ghi lại với cache nhỏ hơn
+// thay vì mất trắng dữ liệu vừa thu thập được.
+const STORY_FILE_CACHE_SHRINK_STEP = 5;
+const STORY_FILE_CACHE_MIN_ENTRIES = 5;
+
+function pruneStoryCache(cache, maxEntries) {
+    const keys = Object.keys(cache);
+    if (keys.length > maxEntries) {
+        keys
+            .sort((a, b) => (cache[a].time || 0) - (cache[b].time || 0))
+            .slice(0, keys.length - maxEntries)
+            .forEach((k) => delete cache[k]);
+    }
+    return cache;
+}
+
+function setStoryCacheWithRetry(cache, maxEntries, fileName, patchKeys, resolve) {
+    chrome.storage.local.set({ storyFileCache: cache }, () => {
+        if (chrome.runtime.lastError) {
+            const msg = chrome.runtime.lastError.message || '';
+            const isQuotaError = /quota/i.test(msg);
+            if (isQuotaError && maxEntries > STORY_FILE_CACHE_MIN_ENTRIES) {
+                // Hết dung lượng: cắt bớt cache nhỏ hơn nữa rồi thử ghi lại,
+                // thay vì bỏ luôn bản dịch/nguyên văn vừa thu thập được.
+                const smallerMax = Math.max(STORY_FILE_CACHE_MIN_ENTRIES, maxEntries - STORY_FILE_CACHE_SHRINK_STEP);
+                console.warn('[StoryFileCache] Vượt quota, thu nhỏ cache xuống', smallerMax, 'entry và thử lại. file:', fileName);
+                const shrunk = pruneStoryCache(cache, smallerMax);
+                setStoryCacheWithRetry(shrunk, smallerMax, fileName, patchKeys, resolve);
+                return;
+            }
+            console.error('[StoryFileCache] Lỗi lưu cache:', msg, 'file:', fileName);
+        } else {
+            console.log('[StoryFileCache] Đã cache', fileName, patchKeys);
+        }
+        resolve();
+    });
+}
+
 function saveStoryFileCache(fileName, patch) {
     if (!fileName) return;
     // Nối tiếp các lần ghi (thay vì get/set song song) để tránh 2 message
@@ -173,22 +211,9 @@ function saveStoryFileCache(fileName, patch) {
 
             // Giới hạn số chap được cache để tránh phình storage: giữ lại các entry
             // mới nhất theo "time" khi vượt quá ngưỡng.
-            const keys = Object.keys(cache);
-            if (keys.length > STORY_FILE_CACHE_MAX_ENTRIES) {
-                keys
-                    .sort((a, b) => (cache[a].time || 0) - (cache[b].time || 0))
-                    .slice(0, keys.length - STORY_FILE_CACHE_MAX_ENTRIES)
-                    .forEach((k) => delete cache[k]);
-            }
+            pruneStoryCache(cache, STORY_FILE_CACHE_MAX_ENTRIES);
 
-            chrome.storage.local.set({ storyFileCache: cache }, () => {
-                if (chrome.runtime.lastError) {
-                    console.error('[StoryFileCache] Lỗi lưu cache:', chrome.runtime.lastError.message, 'file:', fileName);
-                } else {
-                    console.log('[StoryFileCache] Đã cache', fileName, Object.keys(patch));
-                }
-                resolve();
-            });
+            setStoryCacheWithRetry(cache, STORY_FILE_CACHE_MAX_ENTRIES, fileName, Object.keys(patch), resolve);
         });
     }));
 }
