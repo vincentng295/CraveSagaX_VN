@@ -436,3 +436,19 @@ document.getElementById('btn-export-doc')?.addEventListener('click', (e) => {
         setTimeout(() => { btn.innerText = originalLabel; }, 1500);
     });
 });
+
+const fastcacheToggle = document.getElementById('fastcache-toggle');
+if (fastcacheToggle) {
+    chrome.storage.local.get({ fastCacheEnabled: true }, (result) => {
+        fastcacheToggle.checked = result.fastCacheEnabled;
+    });
+    fastcacheToggle.addEventListener('change', () => {
+        chrome.storage.local.set({ fastCacheEnabled: fastcacheToggle.checked });
+    });
+}
+
+document.getElementById('btn-clear-fastcache')?.addEventListener('click', () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: 'CLEAR_FAST_CACHE' });
+    });
+});

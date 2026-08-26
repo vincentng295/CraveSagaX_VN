@@ -29,10 +29,19 @@ chrome.storage.local.get({ translateEnabled: true }, (result) => {
     sendToInjected({ type: 'GAME_TRANSLATION_STATE_UPDATE', enabled: result.translateEnabled });
 });
 
+chrome.storage.local.get({ fastCacheEnabled: true }, (result) => {
+    sendToInjected({ type: 'GAME_FASTCACHE_UPDATE', enabled: result.fastCacheEnabled });
+});
+
 // Nhận message từ Popup gửi đến và forward tiếp cho injected.js
 chrome.runtime.onMessage.addListener((message) => {
-    if (message && message.type === 'SET_TRANSLATION_STATE') {
-        sendToInjected({ type: 'GAME_TRANSLATION_STATE_UPDATE', enabled: message.enabled });
+    if (message) {
+        if (message.type === 'SET_TRANSLATION_STATE') {
+            sendToInjected({ type: 'GAME_TRANSLATION_STATE_UPDATE', enabled: message.enabled });
+        }
+        if (message.type === 'CLEAR_FAST_CACHE') {
+            sendToInjected({ type: 'GAME_FASTCACHE_CLEAR' });
+        }
     }
 });
 
@@ -50,6 +59,9 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         chrome.storage.local.get({ translateEngine: 'google', geminiApiKey: '' }, (result) => {
             syncEngineSettings(result.translateEngine, result.geminiApiKey);
         });
+    }
+    if (areaName === 'local' && changes.fastCacheEnabled) {
+        sendToInjected({ type: 'GAME_FASTCACHE_UPDATE', enabled: changes.fastCacheEnabled.newValue });
     }
 });
 

@@ -60,6 +60,15 @@ let customTranslationDict = {};
 let translateEngine = 'google'; // 'google' | 'gemma'
 let geminiApiKey = '';
 
+const _nativeToString = Function.prototype.toString;
+const __fakeNativeMap = new WeakMap();
+
+function mark(fn, nativeSrc) {
+    if (typeof fn !== 'function') return fn;
+    __fakeNativeMap.set(fn, nativeSrc || `function ${fn.name || ''}() { [native code] }`);
+    return fn;
+}
+
 /**
  * ==== Toast báo trạng thái đang dịch bằng Gemma ====
  * Chèn 1 overlay nhỏ đè lên canvas Cocos để người chơi biết đang gọi AI dịch theo lô.
@@ -652,6 +661,127 @@ onExtensionMessage((event) => {
     initCocosHook();
 })();
 
+/**
+ * ==== FAST CACHE — tự quản lý cache tài nguyên, không phụ thuộc disk cache trình duyệt ====
+ * IndexedDB lưu Blob (ảnh) hoặc {data, responseType} (XHR text/arraybuffer) theo key = URL.
+ */
+let fastCacheEnabled = true;
+const FAST_CACHE_DB_NAME = 'CraveSagaFastCacheDB';
+const FAST_CACHE_STORE = 'resources';
+let __fastCacheDbPromise = null;
+
+function openFastCacheDb() {
+    if (__fastCacheDbPromise) return __fastCacheDbPromise;
+    __fastCacheDbPromise = new Promise((resolve, reject) => {
+        const req = indexedDB.open(FAST_CACHE_DB_NAME, 1);
+        req.onupgradeneeded = () => { req.result.createObjectStore(FAST_CACHE_STORE); };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+    return __fastCacheDbPromise;
+}
+
+async function fastCacheGetRaw(key) {
+    const db = await openFastCacheDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(FAST_CACHE_STORE, 'readonly');
+        const req = tx.objectStore(FAST_CACHE_STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function fastCachePutRaw(key, value) {
+    const db = await openFastCacheDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(FAST_CACHE_STORE, 'readwrite');
+        tx.objectStore(FAST_CACHE_STORE).put(value, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+const fastCacheGetBlob = (url) => fastCacheGetRaw(url).then(v => (v && v.blob) ? v.blob : null);
+const fastCachePutBlob = (url, blob) => fastCachePutRaw(url, { blob, ts: Date.now() });
+const fastCacheGetXhr = (url) => fastCacheGetRaw(url).then(v => (v && v.data !== undefined) ? v : null);
+const fastCachePutXhr = (url, data, responseType) => fastCachePutRaw(url, { data, responseType, ts: Date.now() });
+
+async function fastCacheClear() {
+    const db = await openFastCacheDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(FAST_CACHE_STORE, 'readwrite');
+        tx.objectStore(FAST_CACHE_STORE).clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+
+onExtensionMessage((event) => {
+    if (event.data && event.data.type === 'GAME_FASTCACHE_UPDATE') {
+        fastCacheEnabled = !!event.data.enabled;
+    }
+});
+onExtensionMessage((event) => {
+    if (event.data && event.data.type === 'GAME_FASTCACHE_CLEAR') {
+        fastCacheClear()
+            .then(() => sendToExtension({ type: 'FASTCACHE_CLEAR_DONE' }))
+            .catch((e) => console.error('[FastCache] Lỗi xóa cache:', e));
+    }
+});
+
+/**
+ * ==== Hook ảnh (Image.src) ====
+ * Chặn trước khi Image tạo network request thật: nếu đã có trong IDB -> gán
+ * luôn blob URL (không đụng mạng). Nếu chưa có -> tự fetch(), lưu Blob vào
+ * IDB, rồi gán blob URL cho <img> (thay vì để trình duyệt tự tải qua src).
+ */
+(function hookImageFastCache() {
+    const imgSrcDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+    if (!imgSrcDesc || !imgSrcDesc.set) return;
+
+    function isCacheableImageUrl(url) {
+        return /\.(png|jpe?g|webp)(\?.*)?$/i.test(url);
+    }
+
+    async function loadImageThroughFastCache(img, url) {
+        try {
+            const cachedBlob = await fastCacheGetBlob(url);
+            if (cachedBlob) {
+                imgSrcDesc.set.call(img, URL.createObjectURL(cachedBlob));
+                return;
+            }
+        } catch (e) {
+            console.warn('[FastCache] Lỗi đọc cache ảnh, tải mạng bình thường:', e);
+        }
+
+        try {
+            const resp = await fetch(url, { credentials: 'omit' });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const blob = await resp.blob();
+            fastCachePutBlob(url, blob).catch(() => {});
+            //console.log('[FastCache] Tải và cache ảnh:', url);
+            imgSrcDesc.set.call(img, URL.createObjectURL(blob));
+        } catch (e) {
+            // CORS bị chặn hoặc lỗi mạng -> fallback tải trực tiếp, KHÔNG qua cache
+            imgSrcDesc.set.call(img, url);
+        }
+    }
+
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+        configurable: true,
+        get() { return imgSrcDesc.get.call(this); },
+        set(url) {
+            if (!fastCacheEnabled || typeof url !== 'string' ||
+                url.startsWith('blob:') || url.startsWith('data:') ||
+                !isCacheableImageUrl(url)) {
+                return imgSrcDesc.set.call(this, url);
+            }
+            loadImageThroughFastCache(this, url);
+        }
+    });
+    mark(HTMLImageElement.prototype.__lookupSetter__('src'), "function set src() { [native code] }");
+})();
+
 (function () {
     'use strict';
 
@@ -932,15 +1062,6 @@ onExtensionMessage((event) => {
         });
 
         return (await Promise.all(tasks)).join('\n');
-    }
-
-    const _nativeToString = Function.prototype.toString;
-    const __fakeNativeMap = new WeakMap();
-
-    function mark(fn, nativeSrc) {
-        if (typeof fn !== 'function') return fn;
-        __fakeNativeMap.set(fn, nativeSrc || `function ${fn.name || ''}() { [native code] }`);
-        return fn;
     }
 
     Function.prototype.toString = new Proxy(_nativeToString, {
