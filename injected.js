@@ -806,10 +806,47 @@ onExtensionMessage((event) => {
                 realOnReadyStateChange: null,
                 loadListeners: [],
                 rscListeners: [],
+                method: null,
+                url: null,
+                fastCachedResponse: undefined,
+                fakeReadyState: undefined,
+                fakeStatus: undefined,
             });
         }
         return stateMap.get(xhr);
     }
+
+    // ==== Fast Cache cho XHR GET tài nguyên tĩnh (json/plist/atlas/audio/font...) ====
+    // Không đụng file .txt story (đã có luồng dịch riêng) và không đụng API động /readStory.
+    const FASTCACHE_XHR_EXT_REGEX = /\.(json|plist|atlas|fnt|mp3|ogg|m4a|ttf)(\?.*)?$/i;
+
+    function isFastCacheableXhr(st) {
+        return fastCacheEnabled
+            && st.method === 'GET'
+            && typeof st.url === 'string'
+            && !st.isStoryFile
+            && !st.isReadStory
+            && FASTCACHE_XHR_EXT_REGEX.test(st.url);
+    }
+
+    const originalReadyStateDesc = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'readyState');
+    const originalStatusDesc = Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'status');
+
+    Object.defineProperty(XMLHttpRequest.prototype, 'readyState', {
+        configurable: true,
+        get() {
+            const st = getState(this);
+            return st.fakeReadyState !== undefined ? st.fakeReadyState : originalReadyStateDesc.get.call(this);
+        }
+    });
+
+    Object.defineProperty(XMLHttpRequest.prototype, 'status', {
+        configurable: true,
+        get() {
+            const st = getState(this);
+            return st.fakeStatus !== undefined ? st.fakeStatus : originalStatusDesc.get.call(this);
+        }
+    });
 
     const translateCache = new Map();
     // Kết quả dịch theo lô (Gemma) của file story script hiện đang xử lý.
@@ -1102,6 +1139,8 @@ onExtensionMessage((event) => {
 
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
         const st = getState(this);
+        st.method = method;
+        st.url = url;
         st.isStoryFile = typeof url === 'string' && url.endsWith(SUFFIX);
         if (st.isStoryFile) {
             // Lấy tên file .txt từ URL
@@ -1155,8 +1194,50 @@ onExtensionMessage((event) => {
         }
     }
 
+    async function handleFastCacheSend(xhr, st, body) {
+        try {
+            const cached = await fastCacheGetXhr(st.url);
+            if (cached) {
+                st.fastCachedResponse = cached.data;
+                st.fakeStatus = 200;
+                st.fakeReadyState = 4;
+                setTimeout(() => dispatchRealEvent(xhr, { type: 'readystatechange', target: xhr }), 0);
+                return;
+            }
+        } catch (e) {
+            console.warn('[FastCache] Lỗi đọc cache XHR, tải mạng bình thường:', e);
+        }
+
+        // Cache miss -> tải mạng thật, đồng thời "nghe lén" response để lưu cache cho lần sau.
+        rawAddEventListener.call(xhr, 'readystatechange', function onFastCacheCapture(evt) {
+            if (xhr.readyState !== 4) return;
+
+            if (xhr.status === 200 || xhr.status === 0) {
+                try {
+                    const rt = xhr.responseType || 'text';
+                    const raw = (rt === 'text' || rt === '')
+                        ? originalResponseTextDesc.get.call(xhr)
+                        : originalResponseDesc.get.call(xhr);
+                    fastCachePutXhr(st.url, raw, rt).catch(() => {});
+                } catch (e) {
+                    console.warn('[FastCache] Lỗi lưu cache XHR:', e);
+                }
+            }
+
+            // Luôn forward về game dù thành công hay lỗi, để không bao giờ "treo" request.
+            dispatchRealEvent(xhr, evt);
+        });
+
+        rawSend.call(xhr, body);
+    }
+
     XMLHttpRequest.prototype.send = function (body) {
         const st = getState(this);
+
+        if (isFastCacheableXhr(st)) {
+            handleFastCacheSend(this, st, body);
+            return;
+        }
 
         rawAddEventListener.call(this, 'readystatechange', (evt) => {
             if (this.readyState !== 4) return;
@@ -1250,9 +1331,9 @@ onExtensionMessage((event) => {
         configurable: true,
         get() {
             const st = getState(this);
-            return st.translatedText !== null
-                ? st.translatedText
-                : originalResponseTextDesc.get.call(this);
+            if (st.translatedText !== null) return st.translatedText;
+            if (st.fastCachedResponse !== undefined) return st.fastCachedResponse;
+            return originalResponseTextDesc.get.call(this);
         }
     });
 
@@ -1260,9 +1341,9 @@ onExtensionMessage((event) => {
         configurable: true,
         get() {
             const st = getState(this);
-            return st.translatedText !== null
-                ? st.translatedText
-                : originalResponseDesc.get.call(this);
+            if (st.translatedText !== null) return st.translatedText;
+            if (st.fastCachedResponse !== undefined) return st.fastCachedResponse;
+            return originalResponseDesc.get.call(this);
         }
     });
 
