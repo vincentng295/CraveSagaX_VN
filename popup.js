@@ -58,6 +58,73 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText.innerText = enabled ? 'Tự động dịch: ON' : 'Tự động dịch: OFF';
     }
 
+    // ==== Fast Cache: toggle bật/tắt ====
+    const fastcacheToggle = document.getElementById('fastcache-toggle');
+    const fastcacheStatusText = document.getElementById('fastcache-status-text');
+
+    function updateFastCacheStatusText(enabled) {
+        if (fastcacheStatusText) fastcacheStatusText.innerText = enabled ? 'Fast Cache: ON' : 'Fast Cache: OFF';
+    }
+
+    if (fastcacheToggle) {
+        chrome.storage.local.get({ fastCacheEnabled: true }, (result) => {
+            fastcacheToggle.checked = result.fastCacheEnabled;
+            updateFastCacheStatusText(result.fastCacheEnabled);
+        });
+
+        fastcacheToggle.addEventListener('change', () => {
+            const isEnabled = fastcacheToggle.checked;
+            updateFastCacheStatusText(isEnabled);
+            chrome.storage.local.set({ fastCacheEnabled: isEnabled });
+        });
+    }
+
+    function sendToActiveTab(message) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0] && tabs[0].id) {
+                chrome.tabs.sendMessage(tabs[0].id, message);
+            }
+        });
+    }
+
+    // ==== Fast Cache: xóa cache ====
+    document.getElementById('btn-fastcache-clear')?.addEventListener('click', () => {
+        sendToActiveTab({ type: 'CLEAR_FAST_CACHE' });
+    });
+
+    // ==== Fast Cache: xuất cache ra file .zip (việc tải file do content.js xử lý) ====
+    document.getElementById('btn-fastcache-export')?.addEventListener('click', () => {
+        sendToActiveTab({ type: 'EXPORT_FAST_CACHE' });
+    });
+
+    // ==== Fast Cache: nhập cache từ file .zip ====
+    const fastcacheImportInput = document.getElementById('fastcache-import-input');
+    const fastcacheImportStatus = document.getElementById('fastcache-import-status');
+
+    document.getElementById('btn-fastcache-import')?.addEventListener('click', () => {
+        fastcacheImportInput?.click();
+    });
+
+    fastcacheImportInput?.addEventListener('change', () => {
+        const file = fastcacheImportInput.files && fastcacheImportInput.files[0];
+        if (!file) return;
+
+        if (fastcacheImportStatus) fastcacheImportStatus.innerText = `Đang nhập ${file.name}...`;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            // reader.result dạng "data:application/zip;base64,AAAA..."
+            const base64 = String(reader.result).split(',')[1];
+            sendToActiveTab({ type: 'IMPORT_FAST_CACHE', base64 });
+            if (fastcacheImportStatus) fastcacheImportStatus.innerText = 'Đã gửi file, xem kết quả ở Console (F12) trên trang game.';
+        };
+        reader.onerror = () => {
+            if (fastcacheImportStatus) fastcacheImportStatus.innerText = 'Lỗi đọc file.';
+        };
+        reader.readAsDataURL(file);
+        fastcacheImportInput.value = '';
+    });
+
     // Xử lý nút Copy thông tin Donation
     const setupCopy = (btnId, textId) => {
         const btn = document.getElementById(btnId);
@@ -434,21 +501,5 @@ document.getElementById('btn-export-doc')?.addEventListener('click', (e) => {
 
         btn.innerText = '✓ Đã xuất file';
         setTimeout(() => { btn.innerText = originalLabel; }, 1500);
-    });
-});
-
-const fastcacheToggle = document.getElementById('fastcache-toggle');
-if (fastcacheToggle) {
-    chrome.storage.local.get({ fastCacheEnabled: true }, (result) => {
-        fastcacheToggle.checked = result.fastCacheEnabled;
-    });
-    fastcacheToggle.addEventListener('change', () => {
-        chrome.storage.local.set({ fastCacheEnabled: fastcacheToggle.checked });
-    });
-}
-
-document.getElementById('btn-clear-fastcache')?.addEventListener('click', () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]?.id) chrome.tabs.sendMessage(tabs[0].id, { type: 'CLEAR_FAST_CACHE' });
     });
 });

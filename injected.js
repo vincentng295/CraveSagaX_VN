@@ -720,6 +720,263 @@ async function fastCacheClear() {
     });
 }
 
+async function fastCacheGetAllEntries() {
+    const db = await openFastCacheDb();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(FAST_CACHE_STORE, 'readonly');
+        const store = tx.objectStore(FAST_CACHE_STORE);
+        const keysReq = store.getAllKeys();
+        const valuesReq = store.getAll();
+        let keys = null, values = null;
+        function maybeResolve() {
+            if (keys !== null && values !== null) {
+                resolve(keys.map((k, i) => ({ url: k, value: values[i] })));
+            }
+        }
+        keysReq.onsuccess = () => { keys = keysReq.result; maybeResolve(); };
+        valuesReq.onsuccess = () => { values = valuesReq.result; maybeResolve(); };
+        keysReq.onerror = () => reject(keysReq.error);
+        valuesReq.onerror = () => reject(valuesReq.error);
+    });
+}
+
+/**
+ * ==== ZIP tối giản (chỉ method Store, không nén) ====
+ * Không cần thư viện ngoài. Đủ dùng vì mục tiêu là backup/restore 1-1,
+ * không cần tối ưu dung lượng.
+ */
+function crc32(bytes) {
+    let crc = ~0;
+    for (let i = 0; i < bytes.length; i++) {
+        crc ^= bytes[i];
+        for (let j = 0; j < 8; j++) {
+            crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+        }
+    }
+    return (~crc) >>> 0;
+}
+
+function strToBytes(str) {
+    return new TextEncoder().encode(str);
+}
+
+async function valueToBytes(data) {
+    if (data instanceof ArrayBuffer) return new Uint8Array(data);
+    if (data instanceof Blob) return new Uint8Array(await data.arrayBuffer());
+    if (typeof data === 'string') return strToBytes(data);
+    // Trường hợp hiếm (vd responseType 'json' đã được parse sẵn thành object).
+    return strToBytes(JSON.stringify(data));
+}
+
+// Quy ước path trong zip: "./domain.com/path/to/media.jpg" (bỏ query string).
+function urlToZipPath(urlStr) {
+    try {
+        const u = new URL(urlStr);
+        let pathPart = u.pathname && u.pathname !== '/' ? u.pathname : '/index';
+        return `./${u.hostname}${pathPart}`;
+    } catch (e) {
+        return `./_invalid/${encodeURIComponent(urlStr)}`;
+    }
+}
+
+function zipPathToUrl(path) {
+    const clean = path.replace(/^\.\//, '').replace(/^\/+/, '');
+    return 'https://' + clean;
+}
+
+function isImageUrl(url) {
+    return /\.(png|jpe?g|webp)(\?.*)?$/i.test(url);
+}
+function isBinaryAssetUrl(url) {
+    return /\.(mp3|ogg|m4a|ttf)(\?.*)?$/i.test(url);
+}
+
+async function buildZip(entries) {
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+    const now = new Date();
+    const dosTime = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+    const dosDate = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+
+    for (const entry of entries) {
+        const nameBytes = strToBytes(entry.path);
+        const data = entry.bytes;
+        const crc = crc32(data);
+
+        const lh = new DataView(new ArrayBuffer(30));
+        lh.setUint32(0, 0x04034b50, true);
+        lh.setUint16(4, 20, true);
+        lh.setUint16(6, 0, true);
+        lh.setUint16(8, 0, true); // method = store
+        lh.setUint16(10, dosTime, true);
+        lh.setUint16(12, dosDate, true);
+        lh.setUint32(14, crc, true);
+        lh.setUint32(18, data.length, true);
+        lh.setUint32(22, data.length, true);
+        lh.setUint16(26, nameBytes.length, true);
+        lh.setUint16(28, 0, true);
+        localParts.push(new Uint8Array(lh.buffer), nameBytes, data);
+
+        const ch = new DataView(new ArrayBuffer(46));
+        ch.setUint32(0, 0x02014b50, true);
+        ch.setUint16(4, 20, true);
+        ch.setUint16(6, 20, true);
+        ch.setUint16(8, 0, true);
+        ch.setUint16(10, 0, true);
+        ch.setUint16(12, dosTime, true);
+        ch.setUint16(14, dosDate, true);
+        ch.setUint32(16, crc, true);
+        ch.setUint32(20, data.length, true);
+        ch.setUint32(24, data.length, true);
+        ch.setUint16(28, nameBytes.length, true);
+        ch.setUint16(30, 0, true);
+        ch.setUint16(32, 0, true);
+        ch.setUint16(34, 0, true);
+        ch.setUint16(36, 0, true);
+        ch.setUint32(38, 0, true);
+        ch.setUint32(42, offset, true);
+        centralParts.push(new Uint8Array(ch.buffer), nameBytes);
+
+        offset += 30 + nameBytes.length + data.length;
+    }
+
+    const centralDirOffset = offset;
+    const centralSize = centralParts.reduce((sum, p) => sum + p.length, 0);
+
+    const eocd = new DataView(new ArrayBuffer(22));
+    eocd.setUint32(0, 0x06054b50, true);
+    eocd.setUint16(4, 0, true);
+    eocd.setUint16(6, 0, true);
+    eocd.setUint16(8, entries.length, true);
+    eocd.setUint16(10, entries.length, true);
+    eocd.setUint32(12, centralSize, true);
+    eocd.setUint32(16, centralDirOffset, true);
+    eocd.setUint16(20, 0, true);
+
+    return new Blob([...localParts, ...centralParts, new Uint8Array(eocd.buffer)], { type: 'application/zip' });
+}
+
+function parseZip(buffer) {
+    const view = new DataView(buffer);
+    const bytes = new Uint8Array(buffer);
+
+    let eocdOffset = -1;
+    for (let i = bytes.length - 22; i >= 0; i--) {
+        if (view.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
+    }
+    if (eocdOffset === -1) throw new Error('Không phải file ZIP hợp lệ (không tìm thấy EOCD).');
+
+    const totalEntries = view.getUint16(eocdOffset + 10, true);
+    const centralDirOffset = view.getUint32(eocdOffset + 16, true);
+
+    const centralEntries = [];
+    let p = centralDirOffset;
+    for (let i = 0; i < totalEntries; i++) {
+        if (view.getUint32(p, true) !== 0x02014b50) throw new Error('Central directory không hợp lệ.');
+        const method = view.getUint16(p + 10, true);
+        const compSize = view.getUint32(p + 20, true);
+        const nameLen = view.getUint16(p + 28, true);
+        const extraLen = view.getUint16(p + 30, true);
+        const commentLen = view.getUint16(p + 32, true);
+        const localHeaderOffset = view.getUint32(p + 42, true);
+        const name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen));
+        centralEntries.push({ name, method, compSize, localHeaderOffset });
+        p += 46 + nameLen + extraLen + commentLen;
+    }
+
+    return centralEntries.map((e) => {
+        const lp = e.localHeaderOffset;
+        if (view.getUint32(lp, true) !== 0x04034b50) throw new Error('Local file header không hợp lệ: ' + e.name);
+        const lNameLen = view.getUint16(lp + 26, true);
+        const lExtraLen = view.getUint16(lp + 28, true);
+        const dataStart = lp + 30 + lNameLen + lExtraLen;
+
+        if (e.method !== 0) {
+            console_warn('[FastCache Import] Bỏ qua entry bị nén (chỉ hỗ trợ Store):', e.name);
+            return { path: e.name, bytes: null };
+        }
+        return { path: e.name, bytes: bytes.slice(dataStart, dataStart + e.compSize) };
+    });
+}
+
+async function fastCacheExportZip() {
+    const all = await fastCacheGetAllEntries();
+    const usedPaths = new Set();
+    const zipEntries = [];
+
+    for (const { url, value } of all) {
+        let bytes;
+        if (value.blob) {
+            bytes = new Uint8Array(await value.blob.arrayBuffer());
+        } else if (value.data !== undefined) {
+            bytes = await valueToBytes(value.data);
+        } else {
+            continue;
+        }
+
+        let path = urlToZipPath(url);
+        if (usedPaths.has(path)) {
+            // Trùng path (thường do khác query string, path đã bỏ query) ->
+            // thêm hậu tố ngắn từ CRC32 của URL gốc để không ghi đè mất dữ liệu.
+            const suffix = '~' + crc32(strToBytes(url)).toString(16);
+            const dot = path.lastIndexOf('.');
+            path = dot > -1 ? path.slice(0, dot) + suffix + path.slice(dot) : path + suffix;
+        }
+        usedPaths.add(path);
+        zipEntries.push({ path, bytes });
+    }
+
+    return buildZip(zipEntries);
+}
+
+async function fastCacheImportZip(arrayBuffer) {
+    const entries = parseZip(arrayBuffer);
+    let imported = 0, skipped = 0;
+
+    for (const entry of entries) {
+        if (!entry.bytes) { skipped++; continue; }
+        const url = zipPathToUrl(entry.path);
+        try {
+            if (isImageUrl(url)) {
+                await fastCachePutBlob(url, new Blob([entry.bytes]));
+            } else if (isBinaryAssetUrl(url)) {
+                await fastCachePutXhr(url, entry.bytes.buffer.slice(entry.bytes.byteOffset, entry.bytes.byteOffset + entry.bytes.byteLength), 'arraybuffer');
+            } else {
+                await fastCachePutXhr(url, new TextDecoder('utf-8').decode(entry.bytes), 'text');
+            }
+            imported++;
+        } catch (e) {
+            console_warn('[FastCache Import] Lỗi ghi entry:', entry.path, e);
+            skipped++;
+        }
+    }
+
+    return { imported, skipped, total: entries.length };
+}
+
+onExtensionMessage((event) => {
+    if (event.data && event.data.type === 'GAME_FASTCACHE_EXPORT') {
+        fastCacheExportZip()
+            .then((blob) => sendToExtension({ type: 'FASTCACHE_EXPORT_DONE', blob }))
+            .catch((e) => {
+                console_error('[FastCache] Lỗi xuất cache:', e);
+                sendToExtension({ type: 'FASTCACHE_EXPORT_ERROR', message: String(e) });
+            });
+    }
+});
+
+onExtensionMessage((event) => {
+    if (event.data && event.data.type === 'GAME_FASTCACHE_IMPORT') {
+        fastCacheImportZip(event.data.arrayBuffer)
+            .then((result) => sendToExtension({ type: 'FASTCACHE_IMPORT_DONE', result }))
+            .catch((e) => {
+                console_error('[FastCache] Lỗi nhập cache:', e);
+                sendToExtension({ type: 'FASTCACHE_IMPORT_ERROR', message: String(e) });
+            });
+    }
+});
+
 onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_FASTCACHE_UPDATE') {
         fastCacheEnabled = !!event.data.enabled;

@@ -18,8 +18,8 @@ const __extChannel = new MessageChannel();
 const injectedPort = __extChannel.port1;
 injectedPort.start();
 
-function sendToInjected(data) {
-    injectedPort.postMessage(data);
+function sendToInjected(data, transfer) {
+    injectedPort.postMessage(data, transfer || []);
 }
 
 window.postMessage({ type: '__EXT_PORT_INIT__' }, '*', [__extChannel.port2]);
@@ -29,21 +29,81 @@ chrome.storage.local.get({ translateEnabled: true }, (result) => {
     sendToInjected({ type: 'GAME_TRANSLATION_STATE_UPDATE', enabled: result.translateEnabled });
 });
 
+// Nhận message từ Popup gửi đến và forward tiếp cho injected.js
+chrome.runtime.onMessage.addListener((message) => {
+    if (message && message.type === 'SET_TRANSLATION_STATE') {
+        sendToInjected({ type: 'GAME_TRANSLATION_STATE_UPDATE', enabled: message.enabled });
+    }
+    if (message && message.type === 'CLEAR_FAST_CACHE') {
+        sendToInjected({ type: 'GAME_FASTCACHE_CLEAR' });
+    }
+    if (message && message.type === 'EXPORT_FAST_CACHE') {
+        sendToInjected({ type: 'GAME_FASTCACHE_EXPORT' });
+    }
+    if (message && message.type === 'IMPORT_FAST_CACHE' && message.base64) {
+        try {
+            const arrayBuffer = base64ToArrayBuffer(message.base64);
+            // Transfer ArrayBuffer sang injected.js (zero-copy) thay vì clone,
+            // vì file zip import có thể khá lớn.
+            sendToInjected({ type: 'GAME_FASTCACHE_IMPORT', arrayBuffer }, [arrayBuffer]);
+        } catch (e) {
+            console.error('[FastCache] Lỗi giải mã file import:', e);
+        }
+    }
+});
+
+function base64ToArrayBuffer(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+}
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// ==== Fast Cache: đọc trạng thái ban đầu + đồng bộ khi popup đổi toggle ====
 chrome.storage.local.get({ fastCacheEnabled: true }, (result) => {
     sendToInjected({ type: 'GAME_FASTCACHE_UPDATE', enabled: result.fastCacheEnabled });
 });
 
-// Nhận message từ Popup gửi đến và forward tiếp cho injected.js
-chrome.runtime.onMessage.addListener((message) => {
-    if (message) {
-        if (message.type === 'SET_TRANSLATION_STATE') {
-            sendToInjected({ type: 'GAME_TRANSLATION_STATE_UPDATE', enabled: message.enabled });
-        }
-        if (message.type === 'CLEAR_FAST_CACHE') {
-            sendToInjected({ type: 'GAME_FASTCACHE_CLEAR' });
-        }
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.fastCacheEnabled) {
+        sendToInjected({ type: 'GAME_FASTCACHE_UPDATE', enabled: changes.fastCacheEnabled.newValue });
     }
 });
+
+// Nhận kết quả từ injected.js (qua port): xóa cache, xuất/nhập zip
+injectedPort.addEventListener('message', (e) => {
+    const data = e.data;
+    if (!data) return;
+
+    if (data.type === 'FASTCACHE_CLEAR_DONE') {
+        console.log('[FastCache] Đã xóa toàn bộ cache tài nguyên.');
+    }
+    if (data.type === 'FASTCACHE_EXPORT_DONE' && data.blob) {
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        downloadBlob(data.blob, `cravesagax-fastcache-${ts}.zip`);
+    }
+    if (data.type === 'FASTCACHE_EXPORT_ERROR') {
+        console.error('[FastCache] Lỗi xuất cache:', data.message);
+    }
+    if (data.type === 'FASTCACHE_IMPORT_DONE') {
+        console.log(`[FastCache] Đã nhập ${data.result.imported}/${data.result.total} tài nguyên (bỏ qua ${data.result.skipped}).`);
+    }
+    if (data.type === 'FASTCACHE_IMPORT_ERROR') {
+        console.error('[FastCache] Lỗi nhập cache:', data.message);
+    }
+});
+
 
 // Đọc/đồng bộ cấu hình công cụ dịch (Google Dịch hoặc Gemma/Gemini API) vào main world
 function syncEngineSettings(engine, apiKey) {
@@ -59,9 +119,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         chrome.storage.local.get({ translateEngine: 'google', geminiApiKey: '' }, (result) => {
             syncEngineSettings(result.translateEngine, result.geminiApiKey);
         });
-    }
-    if (areaName === 'local' && changes.fastCacheEnabled) {
-        sendToInjected({ type: 'GAME_FASTCACHE_UPDATE', enabled: changes.fastCacheEnabled.newValue });
     }
 });
 

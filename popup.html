@@ -354,6 +354,24 @@
   </div>
 
   <div class="section">
+    <div class="section-title">Fast Cache (tự quản lý cache tài nguyên)</div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="fastcache-status-text">Fast Cache: ON</span>
+      <label class="switch">
+        <input type="checkbox" id="fastcache-toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div style="display:flex; gap:6px; margin-top:6px;">
+      <button id="btn-fastcache-export" class="btn-chap-save" style="flex:1;">📦 Xuất (.zip)</button>
+      <button id="btn-fastcache-import" class="btn-chap-save" style="flex:1;">📥 Nhập (.zip)</button>
+    </div>
+    <input type="file" id="fastcache-import-input" accept=".zip" style="display:none;">
+    <button id="btn-fastcache-clear" class="btn-chap-save" style="width:100%; margin-top:6px; background:#dc2626;">🗑️ Xóa cache tài nguyên</button>
+    <div class="engine-hint" id="fastcache-import-status"></div>
+  </div>
+
+  <div class="section">
     <div class="section-title">Công cụ dịch</div>
     <div class="engine-card">
       <select id="engine-select" class="engine-select">
@@ -368,18 +386,6 @@
       </div>
       <div class="engine-hint" id="engine-hint"></div>
     </div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Fast Cache (tự quản lý cache)</div>
-    <div class="toggle-wrap">
-      <span class="toggle-label" id="fastcache-status-text">Fast Cache: ON</span>
-      <label class="switch">
-        <input type="checkbox" id="fastcache-toggle" checked>
-        <span class="slider"></span>
-      </label>
-    </div>
-    <button id="btn-clear-fastcache" class="btn-chap-save" style="width:100%; margin-top:6px;">🗑️ Xóa cache tài nguyên</button>
   </div>
 
   <div class="section">
