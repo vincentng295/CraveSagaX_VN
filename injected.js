@@ -13,6 +13,18 @@ let __extPort = null;
 const __pendingOutMessages = [];
 const __portMessageHandlers = [];
 
+// Resolve URL tương đối (vd "/assets/img.png", "img.png", "../a/b.json")
+// thành URL tuyệt đối theo document hiện tại, để dùng làm key cache thống
+// nhất (tránh việc "assets/a.png" và "https://domain.com/x/assets/a.png"
+// bị coi là 2 tài nguyên khác nhau khi thực ra là cùng 1 request).
+function resolveUrl(url) {
+    try {
+        return new URL(url, document.baseURI).href;
+    } catch (e) {
+        return url;
+    }
+}
+
 function sendToExtension(data) {
     if (__extPort) {
         __extPort.postMessage(data);
@@ -902,6 +914,14 @@ function parseZip(buffer) {
 
 async function fastCacheExportZip() {
     const all = await fastCacheGetAllEntries();
+    if (all.length === 0) {
+        // Frame này (theo origin hiện tại) không có gì trong cache — trả về
+        // null thay vì file zip rỗng, để không tự động tải xuống 1 file
+        // rỗng gây nhầm lẫn (đặc biệt khi extension chạy trên nhiều frame
+        // cùng lúc: trang chủ + iframe CDN, mỗi frame có IndexedDB riêng).
+        return null;
+    }
+
     const usedPaths = new Set();
     const zipEntries = [];
 
@@ -927,6 +947,7 @@ async function fastCacheExportZip() {
         zipEntries.push({ path, bytes });
     }
 
+    console_log(`[FastCache] Chuẩn bị xuất ${zipEntries.length} tài nguyên (origin: ${location.origin}).`);
     return buildZip(zipEntries);
 }
 
@@ -958,7 +979,10 @@ async function fastCacheImportZip(arrayBuffer) {
 onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_FASTCACHE_EXPORT') {
         fastCacheExportZip()
-            .then((blob) => sendToExtension({ type: 'FASTCACHE_EXPORT_DONE', blob }))
+            .then((blob) => {
+                if (!blob) return; // Frame này không có cache -> im lặng, không báo lỗi
+                sendToExtension({ type: 'FASTCACHE_EXPORT_DONE', blob });
+            })
             .catch((e) => {
                 console_error('[FastCache] Lỗi xuất cache:', e);
                 sendToExtension({ type: 'FASTCACHE_EXPORT_ERROR', message: String(e) });
@@ -1005,8 +1029,9 @@ onExtensionMessage((event) => {
     }
 
     async function loadImageThroughFastCache(img, url) {
+        const resolvedUrl = resolveUrl(url);
         try {
-            const cachedBlob = await fastCacheGetBlob(url);
+            const cachedBlob = await fastCacheGetBlob(resolvedUrl);
             if (cachedBlob) {
                 console_log('[FastCache] Dùng cache ảnh:', url);
                 imgSrcDesc.set.call(img, URL.createObjectURL(cachedBlob));
@@ -1017,11 +1042,11 @@ onExtensionMessage((event) => {
         }
 
         try {
-            const resp = await fetch(url, { credentials: 'omit' });
+            const resp = await fetch(resolvedUrl, { credentials: 'omit' });
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const blob = await resp.blob();
-            fastCachePutBlob(url, blob).catch(() => {});
-            console_log('[FastCache] Tải và cache ảnh:', url);
+            fastCachePutBlob(resolvedUrl, blob).catch(() => {});
+            //console_log('[FastCache] Tải và cache ảnh:', resolvedUrl);
             imgSrcDesc.set.call(img, URL.createObjectURL(blob));
         } catch (e) {
             // CORS bị chặn hoặc lỗi mạng -> fallback tải trực tiếp, KHÔNG qua cache
@@ -1402,7 +1427,10 @@ onExtensionMessage((event) => {
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
         const st = getState(this);
         st.method = method;
-        st.url = url;
+        // Cache key luôn dùng URL tuyệt đối (resolve theo document hiện tại)
+        // để tránh cùng 1 tài nguyên bị coi là 2 key khác nhau khi game gọi
+        // bằng đường dẫn tương đối ở những nơi khác nhau.
+        st.url = typeof url === 'string' ? resolveUrl(url) : url;
         st.isStoryFile = typeof url === 'string' && url.endsWith(SUFFIX);
         if (st.isStoryFile) {
             // Lấy tên file .txt từ URL
@@ -1472,6 +1500,10 @@ onExtensionMessage((event) => {
         }
 
         // Cache miss -> tải mạng thật, đồng thời "nghe lén" response để lưu cache cho lần sau.
+        // QUAN TRỌNG: đây là listener readystatechange DUY NHẤT của request này (vì send()
+        // đã return sớm, không chạy qua nhánh bridge mặc định bên dưới) nên bắt buộc phải tự
+        // gọi dispatchRealEvent ở đây — nếu không, callback/onload thật của game sẽ không bao
+        // giờ được gọi và request coi như "treo" mãi mãi (đây là nguyên nhân game không load).
         rawAddEventListener.call(xhr, 'readystatechange', function onFastCacheCapture(evt) {
             if (xhr.readyState !== 4) return;
 
