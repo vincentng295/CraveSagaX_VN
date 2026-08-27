@@ -800,7 +800,7 @@ function isImageUrl(url) {
     return /\.(png|jpe?g|webp)(\?.*)?$/i.test(url);
 }
 function isBinaryAssetUrl(url) {
-    return /\.(mp3|ogg|m4a|ttf)(\?.*)?$/i.test(url);
+    return /\.(mp3|mp4|ogg|m4a|ttf)(\?.*)?$/i.test(url);
 }
 
 async function buildZip(entries) {
@@ -1098,6 +1098,7 @@ onExtensionMessage((event) => {
                 fastCachedResponse: undefined,
                 fakeReadyState: undefined,
                 fakeStatus: undefined,
+                hasRangeHeader: false,
             });
         }
         return stateMap.get(xhr);
@@ -1105,7 +1106,20 @@ onExtensionMessage((event) => {
 
     // ==== Fast Cache cho XHR GET tài nguyên tĩnh (json/plist/atlas/audio/font...) ====
     // Không đụng file .txt story (đã có luồng dịch riêng) và không đụng API động /readStory.
-    const FASTCACHE_XHR_EXT_REGEX = /\.(json|plist|atlas|fnt|mp3|ogg|m4a|ttf)(\?.*)?$/i;
+    const FASTCACHE_XHR_EXT_REGEX = /\.(json|plist|atlas|fnt|mp3|mp4|ogg|m4a|ttf)(\?.*)?$/i;
+
+    // Một số audio được tải theo kiểu Range (streaming từng đoạn) -> server trả về
+    // 206 Partial Content, tức KHÔNG PHẢI toàn bộ file. Nếu cache nhầm đoạn này,
+    // lần sau phát lại từ cache sẽ bị thiếu/lỗi. Nên phát hiện header "Range" và
+    // loại các request này khỏi luồng fast-cache (để tải/đi thẳng như bình thường).
+    const rawSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+        if (typeof name === 'string' && name.toLowerCase() === 'range') {
+            getState(this).hasRangeHeader = true;
+        }
+        return rawSetRequestHeader.call(this, name, value);
+    };
+    mark(XMLHttpRequest.prototype.setRequestHeader, "function setRequestHeader() { [native code] }");
 
     function isFastCacheableXhr(st) {
         return fastCacheEnabled
@@ -1113,6 +1127,7 @@ onExtensionMessage((event) => {
             && typeof st.url === 'string'
             && !st.isStoryFile
             && !st.isReadStory
+            && !st.hasRangeHeader
             && FASTCACHE_XHR_EXT_REGEX.test(st.url);
     }
 
@@ -1510,14 +1525,25 @@ onExtensionMessage((event) => {
             if (xhr.status === 200 || xhr.status === 0) {
                 try {
                     const rt = xhr.responseType || 'text';
-                    const raw = (rt === 'text' || rt === '')
+                    let raw = (rt === 'text' || rt === '')
                         ? originalResponseTextDesc.get.call(xhr)
                         : originalResponseDesc.get.call(xhr);
-                    fastCachePutXhr(st.url, raw, rt).catch(() => {});
-                    console_log('[FastCache] Cache miss XHR, lưu cache:', st.url);
+                    // QUAN TRỌNG: clone ngay (đồng bộ) ArrayBuffer trước khi forward event cho game.
+                    // Nếu không, game có thể transfer/detach buffer gốc (vd: postMessage transferable,
+                    // decodeAudioData, Worker...) trước khi transaction IndexedDB kịp put() (vì
+                    // fastCachePutRaw phải await openFastCacheDb() trước), gây lỗi
+                    // "DataCloneError: ArrayBuffer is detached and could not be cloned".
+                    if (raw instanceof ArrayBuffer) {
+                        raw = raw.slice(0);
+                    }
+                    fastCachePutXhr(st.url, raw, rt)
+                        .then(() => console_log('[FastCache] Đã cache:', st.url))
+                        .catch((e) => console_warn('[FastCache] Lỗi ghi IndexedDB:', st.url, e));
                 } catch (e) {
-                    console_warn('[FastCache] Lỗi lưu cache XHR:', e);
+                    console_warn('[FastCache] Lỗi lưu cache XHR:', st.url, e);
                 }
+            } else {
+                console_log('[FastCache] Bỏ qua cache (status ' + xhr.status + '):', st.url);
             }
 
             // Luôn forward về game dù thành công hay lỗi, để không bao giờ "treo" request.
