@@ -1,3 +1,7 @@
+console_log = console.log.bind(console);
+console_warn = console.warn.bind(console);
+console_error = console.error.bind(console);
+
 // ==== Kênh riêng (MessageChannel) với content.js — xem giải thích đầy đủ ở
 // đầu content.js. Tóm tắt: content.js tạo 1 MessageChannel, giữ port1, và
 // chuyển port2 sang đây bằng đúng 1 lần window.postMessage (không mang dữ
@@ -45,7 +49,7 @@ window.addEventListener('message', function __onExtPortInit(event) {
     __extPort = event.ports[0];
     __extPort.addEventListener('message', (e) => {
         __portMessageHandlers.forEach((fn) => {
-            try { fn(e); } catch (err) { console.error(err); }
+            try { fn(e); } catch (err) { console_error(err); }
         });
     });
     __extPort.start();
@@ -362,7 +366,7 @@ function parseGemmaRawText(rawText) {
 async function callGemmaBatch(uniqueItems) {
     if (!uniqueItems.length) return {};
     if (!geminiApiKey) {
-        console.warn('[Gemma] Thiếu API Key, bỏ qua dịch lô.');
+        console_warn('[Gemma] Thiếu API Key, bỏ qua dịch lô.');
         return {};
     }
 
@@ -398,7 +402,7 @@ async function callGemmaBatch(uniqueItems) {
         }
         return map;
     } catch (err) {
-        console.error('[Gemma] Lỗi khi dịch theo lô:', err);
+        console_error('[Gemma] Lỗi khi dịch theo lô:', err);
         // Ném lại lỗi để nơi gọi (processStoryScript) biết và hiển thị thông báo
         // cho người dùng, thay vì âm thầm trả về {} khiến người chơi không hay biết
         // là đang bị fallback sang Google Dịch.
@@ -423,7 +427,7 @@ onExtensionMessage((event) => {
         if (typeof translateCache !== 'undefined' && translateCache instanceof Map) {
             translateCache.clear();
         }
-        console.log("-> [AutoTranslate]: Đã cập nhật từ điển!");
+        console_log("-> [AutoTranslate]: Đã cập nhật từ điển!");
     }
 });
 
@@ -655,7 +659,7 @@ onExtensionMessage((event) => {
             configurable: true
         });
 
-        console.log("-> [AutoTranslate]: Hook Cocos2d successfully!");
+        console_log("-> [AutoTranslate]: Hook Cocos2d successfully!");
     }
 
     initCocosHook();
@@ -725,7 +729,7 @@ onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_FASTCACHE_CLEAR') {
         fastCacheClear()
             .then(() => sendToExtension({ type: 'FASTCACHE_CLEAR_DONE' }))
-            .catch((e) => console.error('[FastCache] Lỗi xóa cache:', e));
+            .catch((e) => console_error('[FastCache] Lỗi xóa cache:', e));
     }
 });
 
@@ -747,11 +751,12 @@ onExtensionMessage((event) => {
         try {
             const cachedBlob = await fastCacheGetBlob(url);
             if (cachedBlob) {
+                console_log('[FastCache] Dùng cache ảnh:', url);
                 imgSrcDesc.set.call(img, URL.createObjectURL(cachedBlob));
                 return;
             }
         } catch (e) {
-            console.warn('[FastCache] Lỗi đọc cache ảnh, tải mạng bình thường:', e);
+            console_warn('[FastCache] Lỗi đọc cache ảnh, tải mạng bình thường:', e);
         }
 
         try {
@@ -759,7 +764,7 @@ onExtensionMessage((event) => {
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const blob = await resp.blob();
             fastCachePutBlob(url, blob).catch(() => {});
-            //console.log('[FastCache] Tải và cache ảnh:', url);
+            console_log('[FastCache] Tải và cache ảnh:', url);
             imgSrcDesc.set.call(img, URL.createObjectURL(blob));
         } catch (e) {
             // CORS bị chặn hoặc lỗi mạng -> fallback tải trực tiếp, KHÔNG qua cache
@@ -922,7 +927,7 @@ onExtensionMessage((event) => {
                 return interleaveMarkers(result); 
             }
         } catch (err) {
-            console.error(`[Network Error] "${cleanText}":`, err);
+            console_error(`[Network Error] "${cleanText}":`, err);
         }
 
         sendToExtension({
@@ -1066,7 +1071,7 @@ onExtensionMessage((event) => {
 
         if (translateEngine === 'gemma') {
             const uniqueItems = collectUntranslatedTexts(lines);
-            console.log(`[Gemma] Gộp ${uniqueItems.length} câu chưa dịch của "${fileName || ''}" vào 1 request...`);
+            console_log(`[Gemma] Gộp ${uniqueItems.length} câu chưa dịch của "${fileName || ''}" vào 1 request...`);
             if (uniqueItems.length > 0) {
                 currentGemmaBatchResults = await translateBatchWithGemmaConfirm(uniqueItems);
             } else {
@@ -1178,18 +1183,18 @@ onExtensionMessage((event) => {
     function dispatchRealEvent(xhr, evt) {
         const st = getState(xhr);
         if (typeof st.realOnReadyStateChange === 'function') {
-            try { st.realOnReadyStateChange.call(xhr, evt); } catch (e) { console.error(e); }
+            try { st.realOnReadyStateChange.call(xhr, evt); } catch (e) { console_error(e); }
         }
         st.rscListeners.forEach(fn => {
-            try { fn.call(xhr, evt); } catch (e) { console.error(e); }
+            try { fn.call(xhr, evt); } catch (e) { console_error(e); }
         });
 
         if (xhr.readyState === 4) {
             if (typeof st.realOnload === 'function') {
-                try { st.realOnload.call(xhr, evt); } catch (e) { console.error(e); }
+                try { st.realOnload.call(xhr, evt); } catch (e) { console_error(e); }
             }
             st.loadListeners.forEach(fn => {
-                try { fn.call(xhr, evt); } catch (e) { console.error(e); }
+                try { fn.call(xhr, evt); } catch (e) { console_error(e); }
             });
         }
     }
@@ -1202,10 +1207,11 @@ onExtensionMessage((event) => {
                 st.fakeStatus = 200;
                 st.fakeReadyState = 4;
                 setTimeout(() => dispatchRealEvent(xhr, { type: 'readystatechange', target: xhr }), 0);
+                console_log('[FastCache] Cache hit XHR:', st.url);
                 return;
             }
         } catch (e) {
-            console.warn('[FastCache] Lỗi đọc cache XHR, tải mạng bình thường:', e);
+            console_warn('[FastCache] Lỗi đọc cache XHR, tải mạng bình thường:', e);
         }
 
         // Cache miss -> tải mạng thật, đồng thời "nghe lén" response để lưu cache cho lần sau.
@@ -1219,8 +1225,9 @@ onExtensionMessage((event) => {
                         ? originalResponseTextDesc.get.call(xhr)
                         : originalResponseDesc.get.call(xhr);
                     fastCachePutXhr(st.url, raw, rt).catch(() => {});
+                    console_log('[FastCache] Cache miss XHR, lưu cache:', st.url);
                 } catch (e) {
-                    console.warn('[FastCache] Lỗi lưu cache XHR:', e);
+                    console_warn('[FastCache] Lỗi lưu cache XHR:', e);
                 }
             }
 
@@ -1251,7 +1258,7 @@ onExtensionMessage((event) => {
                         const map = {};
                         data.resources.forEach((item) => {
                             if (item && item.md5 && item.resourcePath) {
-                                console.log("readStory", item.md5 + '.txt', '->', item.resourcePath);
+                                console_log("readStory", item.md5 + '.txt', '->', item.resourcePath);
                                 map[item.md5 + '.txt'] = item.resourcePath;
                             }
                         });
@@ -1260,7 +1267,7 @@ onExtensionMessage((event) => {
                         }
                     }
                 } catch (e) {
-                    console.warn('[ReadStory] Không parse được response:', e);
+                    console_warn('[ReadStory] Không parse được response:', e);
                 }
                 // Không đụng vào response, chỉ "nghe lén" -> để luồng dispatch bình thường xử lý tiếp.
             }
@@ -1282,7 +1289,7 @@ onExtensionMessage((event) => {
             // Một số file script (vd: synopsis) không chứa lời thoại (name,/msg,/select,)
             // -> bỏ qua, không báo GAME_CHAP_OPENED để tránh nhận nhầm là chap đang chơi.
             if (!hasDialogueContent(rawText)) {
-                console.log(`[Story Intercepted] ${st.fileName || ''} — không có lời thoại, bỏ qua dịch`);
+                console_log(`[Story Intercepted] ${st.fileName || ''} — không có lời thoại, bỏ qua dịch`);
                 dispatchRealEvent(this, evt);
                 return;
             }
@@ -1296,18 +1303,18 @@ onExtensionMessage((event) => {
             }
 
             if (!is_translated) {
-                console.log(`[Story Intercepted] ${st.fileName || ''} — dịch tắt, dùng bản gốc`);
+                console_log(`[Story Intercepted] ${st.fileName || ''} — dịch tắt, dùng bản gốc`);
                 st.translatedText = rawText;
                 dispatchRealEvent(this, evt);
                 return;
             }
 
-            console.log(`[Story Intercepted] ${st.fileName || ''} — đang dịch...`);
+            console_log(`[Story Intercepted] ${st.fileName || ''} — đang dịch...`);
 
             processStoryScript(rawText, st.fileName)
                 .then((result) => {
                     st.translatedText = result;
-                    console.log("Dịch xong:", result.substring(0, 150) + "...");
+                    console_log("Dịch xong:", result.substring(0, 150) + "...");
                     // Cache nguyên văn bản đã dịch (đúng thứ tự dòng) cho chap này,
                     // dùng để export .doc bản tiếng Việt.
                     if (st.fileName) {
@@ -1315,7 +1322,7 @@ onExtensionMessage((event) => {
                     }
                 })
                 .catch((err) => {
-                    console.error("Lỗi dịch, dùng bản gốc:", err);
+                    console_error("Lỗi dịch, dùng bản gốc:", err);
                     st.translatedText = rawText;
                 })
                 .finally(() => {
@@ -1347,5 +1354,5 @@ onExtensionMessage((event) => {
         }
     });
 
-    console.log("[Story Translator Hook v2] Sẵn sàng");
+    console_log("[Story Translator Hook v2] Sẵn sàng");
 })();
