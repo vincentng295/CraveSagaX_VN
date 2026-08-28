@@ -13,6 +13,8 @@ let __extPort = null;
 const __pendingOutMessages = [];
 const __portMessageHandlers = [];
 
+const donothing = () => {}; 
+
 // Resolve URL tương đối (vd "/assets/img.png", "img.png", "../a/b.json")
 // thành URL tuyệt đối theo document hiện tại, để dùng làm key cache thống
 // nhất (tránh việc "assets/a.png" và "https://domain.com/x/assets/a.png"
@@ -75,6 +77,7 @@ let is_translated = 1;
 let customTranslationDict = {};
 let translateEngine = 'google'; // 'google' | 'gemma'
 let geminiApiKey = '';
+let overrideCharacterLevelEnabled = false;
 
 const _nativeToString = Function.prototype.toString;
 const __fakeNativeMap = new WeakMap();
@@ -1014,6 +1017,12 @@ onExtensionMessage((event) => {
     }
 });
 
+onExtensionMessage((event) => {
+    if (event.data && event.data.type === 'OVERRIDE_CHARACTER_LEVEL_UPDATE') {
+        overrideCharacterLevelEnabled = Boolean(event.data.enabled);
+    }
+});
+
 /**
  * ==== Hook ảnh (Image.src) ====
  * Chặn trước khi Image tạo network request thật: nếu đã có trong IDB -> gán
@@ -1480,6 +1489,26 @@ onExtensionMessage((event) => {
     };
     mark(XMLHttpRequest.prototype.addEventListener, "function addEventListener() { [native code] }");
 
+    function processUserDataResponse(responseText) {
+        try {
+            const json = JSON.parse(responseText);
+            if (json && Array.isArray(json.characters)) {
+                json.characters.forEach((char) => {
+                    donothing(); // Tạm thời không làm gì, nhưng vẫn giữ chỗ để có thể ghi đè level/exp nếu muốn.
+                    //char.level = 90;
+                    //char.exceedLimit = 5;
+                    //char.exp = 3224300;
+                    //console_log("[OverrideLevel] Ghi đè level cho nhân vật:", char.characterId);
+                });
+                return JSON.stringify(json);
+            }
+            // console_log("[OverrideLevel] Ghi đè thành công!")
+        } catch (e) {
+            console_error("[OverrideLevel] Lỗi parse/mod JSON response:", e);
+        }
+        return responseText;
+    }
+
     function dispatchRealEvent(xhr, evt) {
         const st = getState(xhr);
         if (typeof st.realOnReadyStateChange === 'function') {
@@ -1653,6 +1682,10 @@ onExtensionMessage((event) => {
         configurable: true,
         get() {
             const st = getState(this);
+            if (overrideCharacterLevelEnabled && st.method === 'POST' && st.url && st.url.endsWith('/character/getUserData')) {
+                const originalText = originalResponseTextDesc.get.call(this);
+                return processUserDataResponse(originalText);
+            }
             if (st.translatedText !== null) return st.translatedText;
             if (st.fastCachedResponse !== undefined) return st.fastCachedResponse;
             return originalResponseTextDesc.get.call(this);
@@ -1663,6 +1696,11 @@ onExtensionMessage((event) => {
         configurable: true,
         get() {
             const st = getState(this);
+            if (overrideCharacterLevelEnabled && st.method === 'POST' && st.url && st.url.endsWith('/character/getUserData')) {
+                if (typeof originalResp === 'string') {
+                    return processUserDataResponse(originalResp);
+                }
+            }
             if (st.translatedText !== null) return st.translatedText;
             if (st.fastCachedResponse !== undefined) return st.fastCachedResponse;
             return originalResponseDesc.get.call(this);

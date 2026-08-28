@@ -544,3 +544,21 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
         syncDictToInjected();
     }
 });
+
+// ==== Đọc và đồng bộ cài đặt Ghi đè level nhân vật ====
+function sendOverrideLevelState(experimentalEnabled, overrideLevelEnabled) {
+    const effectiveState = Boolean(experimentalEnabled && overrideLevelEnabled);
+    sendToInjected({ type: 'OVERRIDE_CHARACTER_LEVEL_UPDATE', enabled: effectiveState });
+}
+
+chrome.storage.local.get({ experimentalEnabled: false, overrideCharacterLevelEnabled: false }, (result) => {
+    sendOverrideLevelState(result.experimentalEnabled, result.overrideCharacterLevelEnabled);
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && (changes.experimentalEnabled || changes.overrideCharacterLevelEnabled)) {
+        chrome.storage.local.get({ experimentalEnabled: false, overrideCharacterLevelEnabled: false }, (result) => {
+            sendOverrideLevelState(result.experimentalEnabled, result.overrideCharacterLevelEnabled);
+        });
+    }
+});

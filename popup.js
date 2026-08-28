@@ -267,6 +267,43 @@ document.addEventListener('DOMContentLoaded', () => {
             loadLatestChap();
         }
     });
+
+    
+    // ==== Tùy chọn thử nghiệm & Ghi đè level nhân vật ====
+    const expToggle = document.getElementById('experimental-toggle');
+    const expStatusText = document.getElementById('experimental-status-text');
+    const expPanel = document.getElementById('experimental-panel');
+
+    const overrideLevelToggle = document.getElementById('override-level-toggle');
+    const overrideLevelStatusText = document.getElementById('override-level-status-text');
+
+    function updateExperimentalUI(expEnabled, overrideLevelEnabled) {
+        if (expStatusText) expStatusText.innerText = `🧪 Tùy chọn thử nghiệm: ${expEnabled ? 'ON' : 'OFF'}`;
+        if (expPanel) expPanel.style.display = expEnabled ? 'block' : 'none';
+        if (overrideLevelStatusText) overrideLevelStatusText.innerText = `Ghi đè level nhân vật: ${overrideLevelEnabled ? 'ON' : 'OFF'}`;
+    }
+
+    chrome.storage.local.get({ experimentalEnabled: false, overrideCharacterLevelEnabled: false }, (result) => {
+        if (expToggle) expToggle.checked = result.experimentalEnabled;
+        if (overrideLevelToggle) overrideLevelToggle.checked = result.overrideCharacterLevelEnabled;
+        updateExperimentalUI(result.experimentalEnabled, result.overrideCharacterLevelEnabled);
+    });
+
+    expToggle?.addEventListener('change', () => {
+        const expEnabled = expToggle.checked;
+        const overrideLevelEnabled = overrideLevelToggle ? overrideLevelToggle.checked : false;
+        updateExperimentalUI(expEnabled, overrideLevelEnabled);
+        
+        chrome.storage.local.set({ experimentalEnabled: expEnabled });
+    });
+
+    overrideLevelToggle?.addEventListener('change', () => {
+        const overrideLevelEnabled = overrideLevelToggle.checked;
+        const expEnabled = expToggle ? expToggle.checked : false;
+        updateExperimentalUI(expEnabled, overrideLevelEnabled);
+
+        chrome.storage.local.set({ overrideCharacterLevelEnabled: overrideLevelEnabled });
+    });
 });
 
 document.getElementById('btn-open-options')?.addEventListener('click', () => {
