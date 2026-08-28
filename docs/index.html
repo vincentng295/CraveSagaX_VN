@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crave Saga X VN — Việt hóa toàn diện</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void: #0a0a12;
+    --void-2: #12121e;
+    --gold: #d4af6a;
+    --gold-dim: #8a744a;
+    --crimson: #8f2a3a;
+    --crimson-bright: #c23b4f;
+    --violet: #5c4a8c;
+    --ink: #eae6da;
+    --ink-dim: #a49f92;
+    --line: rgba(234,230,218,0.1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--void);
+    color:var(--ink);
+    font-family:'Be Vietnam Pro', sans-serif;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--crimson-bright);color:#fff;}
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--gold-dim);
+  }
+  h1,h2,h3{font-family:'Cinzel',serif;font-weight:600;letter-spacing:0.01em;}
+
+  a{color:inherit;}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:22px 48px;
+    backdrop-filter:blur(10px);
+    background:linear-gradient(to bottom, rgba(10,10,18,0.85), transparent);
+  }
+  .brand{
+    font-family:'Cinzel',serif;font-weight:700;font-size:1.05rem;
+    letter-spacing:0.04em;
+    display:flex;align-items:center;gap:10px;
+  }
+  .brand .mark{
+    width:20px;height:20px;position:relative;flex-shrink:0;
+  }
+  .brand .mark svg{width:100%;height:100%;}
+  nav ul{list-style:none;display:flex;gap:36px;}
+  nav a{
+    font-size:0.85rem;text-decoration:none;color:var(--ink-dim);
+    transition:color .25s ease;
+    letter-spacing:0.02em;
+  }
+  nav a:hover, nav a:focus-visible{color:var(--gold);}
+  nav a:focus-visible{outline:1px solid var(--gold);outline-offset:4px;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 48px;
+    overflow:hidden;
+  }
+  .hero::before{
+    /* devil side glow, right */
+    content:"";position:absolute;inset:0;
+    background:
+      radial-gradient(ellipse 60% 55% at 82% 30%, rgba(143,42,58,0.35), transparent 60%),
+      radial-gradient(ellipse 55% 50% at 15% 75%, rgba(212,175,106,0.16), transparent 60%);
+    pointer-events:none;
+  }
+  .divide-line{
+    position:absolute;top:-10%;bottom:-10%;left:50%;
+    width:1px;
+    background:linear-gradient(to bottom, transparent, var(--line) 15%, var(--line) 85%, transparent);
+    transform:rotate(8deg);
+    transform-origin:top center;
+    pointer-events:none;
+  }
+  .hero-content{
+    position:relative;z-index:2;
+    max-width:1200px;margin:0 auto;width:100%;
+    padding-top:90px;
+  }
+  .hero-eyebrow{
+    display:flex;align-items:center;gap:14px;margin-bottom:28px;
+    opacity:0;animation:riseIn .9s ease forwards .1s;
+  }
+  .hero-eyebrow .rule{width:36px;height:1px;background:var(--gold-dim);}
+  h1.headline{
+    font-size:clamp(2.6rem, 6vw, 5.2rem);
+    line-height:1.02;
+    max-width:14ch;
+    opacity:0;animation:riseIn 1s ease forwards .25s;
+  }
+  h1.headline .accent{
+    background:linear-gradient(100deg, var(--gold) 0%, #f0d9a8 40%, var(--gold) 70%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero-sub{
+    margin-top:26px;
+    max-width:46ch;
+    font-size:1.08rem;
+    line-height:1.75;
+    color:var(--ink-dim);
+    opacity:0;animation:riseIn 1s ease forwards .4s;
+  }
+  .hero-ctas{
+    margin-top:44px;
+    display:flex;gap:18px;flex-wrap:wrap;align-items:center;
+    opacity:0;animation:riseIn 1s ease forwards .55s;
+  }
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:15px 28px;
+    font-size:0.92rem;font-weight:600;
+    text-decoration:none;
+    border-radius:2px;
+    transition:transform .25s ease, box-shadow .25s ease, background .25s ease;
+    font-family:'Be Vietnam Pro',sans-serif;
+    letter-spacing:0.01em;
+  }
+  .btn-primary{
+    background:var(--gold);color:#1a1206;
+    box-shadow:0 0 0 0 rgba(212,175,106,0.5);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 30px -8px rgba(212,175,106,0.55);}
+  .btn-ghost{
+    border:1px solid var(--line);color:var(--ink);
+    background:rgba(255,255,255,0.02);
+  }
+  .btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold);transform:translateY(-2px);}
+  .btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+
+  .hero-scroll{
+    position:absolute;bottom:38px;left:48px;
+    display:flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+    color:var(--ink-dim);letter-spacing:0.15em;
+    opacity:0;animation:riseIn 1s ease forwards .8s;
+  }
+  .hero-scroll .stem{width:1px;height:34px;background:linear-gradient(to bottom,var(--gold-dim),transparent);}
+
+  .hero-demo{
+    margin-top:56px;max-width:640px;
+    border:1px solid var(--line);border-radius:2px;overflow:hidden;
+    background:var(--void-2);
+    opacity:0;animation:riseIn 1s ease forwards .7s;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,0.6);
+  }
+  .hero-demo img{display:block;width:100%;height:auto;}
+  .hero-demo-cap{
+    display:block;padding:14px 20px;
+    font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+    letter-spacing:0.05em;color:var(--ink-dim);
+    border-top:1px solid var(--line);
+  }
+
+  @keyframes riseIn{
+    from{opacity:0;transform:translateY(16px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section{
+    position:relative;
+    padding:120px 48px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  .section-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:40px;margin-bottom:64px;flex-wrap:wrap;
+  }
+  .section-head h2{font-size:clamp(1.8rem,3vw,2.6rem);max-width:16ch;}
+  .section-head p{color:var(--ink-dim);max-width:36ch;font-size:0.98rem;line-height:1.7;}
+
+  /* ---------- LORE ---------- */
+  .lore{
+    display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:center;
+  }
+  .lore-visual{
+    aspect-ratio:4/5;
+    border-radius:2px;
+    position:relative;
+    background:
+      linear-gradient(155deg, rgba(212,175,106,0.10), transparent 45%),
+      linear-gradient(-25deg, rgba(143,42,58,0.28), transparent 55%),
+      var(--void-2);
+    border:1px solid var(--line);
+    overflow:hidden;
+  }
+  .lore-visual .cap{
+    position:absolute;bottom:0;left:0;right:0;
+    padding:22px 26px;
+    font-family:'JetBrains Mono',monospace;font-size:0.7rem;
+    color:var(--ink-dim);letter-spacing:0.08em;
+    border-top:1px solid var(--line);
+    background:rgba(10,10,18,0.6);backdrop-filter:blur(6px);
+  }
+  .lore-img{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    filter:saturate(1.05) contrast(1.03);
+  }
+  .lore-body p{
+    color:var(--ink-dim);line-height:1.9;font-size:1.02rem;margin-bottom:20px;
+  }
+  .lore-body p strong{color:var(--ink);font-weight:600;}
+  .lore-tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px;}
+  .lore-tags span{
+    font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+    padding:7px 13px;border:1px solid var(--line);border-radius:20px;
+    color:var(--ink-dim);
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .feature{
+    background:var(--void);
+    padding:44px 34px;
+    transition:background .3s ease;
+  }
+  .feature:hover{background:var(--void-2);}
+  .feature .fmark{
+    width:34px;height:34px;margin-bottom:26px;color:var(--gold);
+  }
+  .feature h3{font-size:1.15rem;margin-bottom:12px;font-weight:600;}
+  .feature p{color:var(--ink-dim);font-size:0.92rem;line-height:1.7;}
+
+  /* ---------- SAFETY BANNER ---------- */
+  .safety{
+    border:1px solid rgba(143,42,58,0.4);
+    background:linear-gradient(120deg, rgba(143,42,58,0.12), rgba(143,42,58,0.02));
+    border-radius:2px;
+    padding:40px 44px;
+    display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:flex-start;
+  }
+  .safety svg{width:30px;height:30px;color:var(--crimson-bright);flex-shrink:0;margin-top:2px;}
+  .safety h3{font-size:1.2rem;margin-bottom:14px;color:#f0d0d4;}
+  .safety ol{padding-left:20px;color:var(--ink-dim);line-height:1.85;font-size:0.95rem;}
+  .safety ol li::marker{color:var(--crimson-bright);font-family:'JetBrains Mono',monospace;}
+  .safety ol li{margin-bottom:6px;}
+  .safety ol li strong{color:var(--ink);}
+
+  /* ---------- INSTALL TABS ---------- */
+  .install-tabs{
+    display:flex;gap:8px;margin-bottom:0;
+    border-bottom:1px solid var(--line);
+  }
+  .tab-btn{
+    background:none;border:none;color:var(--ink-dim);
+    font-family:'Be Vietnam Pro',sans-serif;font-size:0.95rem;font-weight:600;
+    padding:16px 22px;cursor:pointer;position:relative;
+    transition:color .25s ease;
+  }
+  .tab-btn.active{color:var(--gold);}
+  .tab-btn::after{
+    content:"";position:absolute;left:22px;right:22px;bottom:-1px;height:2px;
+    background:var(--gold);transform:scaleX(0);transform-origin:left;
+    transition:transform .3s ease;
+  }
+  .tab-btn.active::after{transform:scaleX(1);}
+  .tab-btn:focus-visible{outline:1px solid var(--gold);outline-offset:2px;}
+
+  .tab-panel{display:none;padding-top:50px;}
+  .tab-panel.active{display:block;animation:riseIn .5s ease;}
+
+  .steps{counter-reset:step;}
+  .step{
+    display:grid;grid-template-columns:56px 1fr;gap:24px;
+    padding:28px 0;border-bottom:1px solid var(--line);
+  }
+  .step:last-child{border-bottom:none;}
+  .step-num{
+    font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold-dim);
+    line-height:1;
+  }
+  .step h4{font-size:1.02rem;margin-bottom:8px;font-weight:600;}
+  .step p{color:var(--ink-dim);font-size:0.93rem;line-height:1.75;}
+  .step code{
+    font-family:'JetBrains Mono',monospace;background:var(--void-2);
+    padding:2px 8px;border-radius:3px;font-size:0.85em;color:var(--gold);
+    border:1px solid var(--line);
+  }
+  .step-img{
+    display:block;max-width:280px;width:100%;height:auto;
+    margin-top:18px;border-radius:2px;border:1px solid var(--line);
+  }
+
+  /* ---------- PLAY LINKS ---------- */
+  .play-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .play-card{
+    border:1px solid var(--line);padding:32px 26px;border-radius:2px;
+    text-decoration:none;display:block;
+    transition:border-color .25s ease, transform .25s ease, background .25s ease;
+    background:var(--void-2);
+  }
+  .play-card:hover{border-color:var(--gold-dim);transform:translateY(-4px);background:#171726;}
+  .play-card .pname{font-family:'Cinzel',serif;font-size:1.15rem;margin-bottom:10px;}
+  .play-card .purl{
+    font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--ink-dim);
+    word-break:break-all;
+  }
+  .play-card .arrow{
+    display:inline-block;margin-top:18px;color:var(--gold);font-size:0.85rem;
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* ---------- DONATE ---------- */
+  .donate{
+    display:grid;grid-template-columns:1fr auto;gap:70px;align-items:center;
+    border-top:1px solid var(--line);
+  }
+  .donate-body p{color:var(--ink-dim);line-height:1.85;font-size:1rem;margin-bottom:24px;max-width:44ch;}
+  .donate-info{
+    font-family:'JetBrains Mono',monospace;font-size:0.85rem;
+    display:flex;flex-direction:column;gap:8px;color:var(--ink-dim);
+  }
+  .donate-info b{color:var(--ink);letter-spacing:0.03em;}
+  .qr-wrap{
+    padding:18px;background:#fff;border-radius:4px;
+    box-shadow:0 20px 60px -20px rgba(212,175,106,0.25);
+  }
+  .qr-wrap img{display:block;width:220px;height:220px;}
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line);
+    padding:48px;
+    display:flex;justify-content:space-between;align-items:center;
+    flex-wrap:wrap;gap:16px;
+    font-size:0.82rem;color:var(--ink-dim);
+    font-family:'JetBrains Mono',monospace;
+  }
+  footer a{color:var(--gold-dim);text-decoration:none;}
+  footer a:hover{color:var(--gold);}
+
+  @media (max-width: 860px){
+    nav{padding:18px 24px;}
+    nav ul{display:none;}
+    section{padding:80px 24px;}
+    .lore{grid-template-columns:1fr;gap:44px;}
+    .features{grid-template-columns:1fr;}
+    .safety{grid-template-columns:1fr;padding:30px 26px;}
+    .play-grid{grid-template-columns:1fr;}
+    .donate{grid-template-columns:1fr;gap:36px;}
+    .qr-wrap{justify-self:start;}
+    footer{padding:32px 24px;flex-direction:column;align-items:flex-start;}
+    .hero{padding:0 24px;}
+    .hero-scroll{left:24px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important;animation-iteration-count:1 !important;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">
+    <span class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" stroke="#d4af6a" stroke-width="1.2"/></svg>
+    </span>
+    CRAVE SAGA X · VN
+  </div>
+  <ul>
+    <li><a href="#lore">Cốt truyện</a></li>
+    <li><a href="#features">Tính năng</a></li>
+    <li><a href="#install">Cài đặt</a></li>
+    <li><a href="#play">Chơi ngay</a></li>
+    <li><a href="#donate">Ủng hộ</a></li>
+  </ul>
+</nav>
+
+<header class="hero">
+  <div class="divide-line" aria-hidden="true"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <span class="rule"></span>
+      <span class="eyebrow">Extension việt hóa · Cocos2d-JS</span>
+    </div>
+    <h1 class="headline">Vesteria giờ đã <span class="accent">nói tiếng Việt.</span></h1>
+    <p class="hero-sub">
+      Tiện ích tự động việt hóa và tối ưu hiển thị cho Crave Saga X — thế giới song song nơi thiên thần và ác quỷ tranh giành vận mệnh nhân loại. Hoàn toàn miễn phí, mã nguồn mở, không thu phí.
+    </p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary" href="https://github.com/vincentng295/CraveSagaX_VN/releases/latest" target="_blank" rel="noopener">Tải bản mới nhất</a>
+      <a class="btn btn-ghost" href="#install">Xem hướng dẫn cài đặt</a>
+    </div>
+    <div class="hero-demo">
+      <img src="https://github.com/user-attachments/assets/a9b8e1a9-3eea-42e0-bd67-ae69678a0d54" alt="Demo giao diện đã việt hóa của Crave Saga X">
+      <span class="hero-demo-cap">Giao diện trong game sau khi được việt hóa</span>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <span class="stem"></span>
+    Cuộn để khám phá
+  </div>
+</header>
+
+<section id="lore">
+  <div class="lore">
+    <div class="lore-visual">
+      <img class="lore-img" src="https://crave-saga.jp/images/official/pic_slide_01.jpg" alt="Arche, Vua Thần nguyên thủy tái sinh Master tại Vesteria">
+      <div class="cap">ARCHE · VUA THẦN NGUYÊN THỦY — NGƯỜI TÁI SINH "MASTER" TẠI VESTERIA</div>
+    </div>
+    <div class="lore-body">
+      <span class="eyebrow">Bối cảnh</span>
+      <h2 style="margin:16px 0 26px;font-size:clamp(1.6rem,2.6vw,2.2rem);">Một thế giới chỉ dành cho các chàng trai</h2>
+      <p>Crave Saga X là game <strong>nhập vai chiến thuật theo lượt</strong> lấy bối cảnh tại <strong>Vesteria</strong> — thế giới song song giả tưởng nơi chỉ có nam giới thuộc nhiều chủng tộc sinh sống, chịu sự chi phối giữa hai thế lực đối lập.</p>
+      <p>Phe <strong>thiên thần</strong> muốn dẫn dắt nhân loại đến một utopia lý tưởng, trong khi phe <strong>ác quỷ</strong> theo đuổi tham vọng và sự đồi trụy. Người chơi vào vai "Master", được Thần Sáng tạo và Vua Thần nguyên thủy Arche tái sinh tại Vesteria để bắt đầu hành trình phiêu lưu và cứu rỗi thế giới.</p>
+      <div class="lore-tags">
+        <span>Turn-based RPG</span>
+        <span>Nội dung người lớn</span>
+        <span>Thiên thần vs Ác quỷ</span>
+        <span>Cocos2d-JS</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-head">
+    <h2>Vì sao dùng tiện ích này</h2>
+    <p>Được HuskyDG phát triển vì tình yêu với cốt truyện và cộng đồng game — không thương mại hóa, không thu phí.</p>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <svg class="fmark" viewBox="0 0 24 24" fill="none"><path d="M5 8h6M5 12h4M14 5l5 5-9 9H5v-5l9-9z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h3>Tự động việt hóa</h3>
+      <p>Toàn bộ văn bản trong game được dịch tự động sang tiếng Việt, giúp bạn tiếp cận trọn vẹn cốt truyện Vesteria mà không bị rào cản ngôn ngữ Anh / Nhật.</p>
+    </div>
+    <div class="feature">
+      <svg class="fmark" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.3"/><path d="M4 10h16M10 10v10" stroke="currentColor" stroke-width="1.3"/></svg>
+      <h3>Tối ưu hiển thị</h3>
+      <p>Điều chỉnh giao diện cho phù hợp với văn bản tiếng Việt trên nền tảng Cocos2d-JS, tránh tràn chữ và vỡ layout.</p>
+    </div>
+    <div class="feature">
+      <svg class="fmark" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      <h3>Miễn phí & mã nguồn mở</h3>
+      <p>Toàn bộ code công khai trên GitHub — anh em thoải mái kiểm tra, học hỏi, hoặc cùng đóng góp phát triển dự án.</p>
+    </div>
+  </div>
+</section>
+
+<section id="safety-section">
+  <div class="safety">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 3.5v6c0 5.2-3.4 8.9-8 10.5-4.6-1.6-8-5.3-8-10.5v-6L12 2z" stroke="currentColor" stroke-width="1.3"/><path d="M12 8v5M12 16.5v.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <div>
+      <h3>Cảnh báo an toàn — Bảo mật tài khoản</h3>
+      <p style="color:var(--ink-dim);margin-bottom:18px;font-size:0.95rem;">Không sử dụng extension từ nguồn gốc không rõ nhằm tránh bị đánh cắp thông tin đăng nhập, token session hoặc tài khoản game của bạn.</p>
+      <ol>
+        <li><strong>Chỉ tải tiện ích</strong> từ Repositories / Releases chính thức tại GitHub này.</li>
+        <li><strong>Tuyệt đối KHÔNG sử dụng</strong> các file <code style="border:none;background:none;padding:0;">.crx</code>, <code style="border:none;background:none;padding:0;">.zip</code> hoặc bản mod phát tán qua các đường link trôi nổi, không rõ nguồn gốc.</li>
+        <li>Anh em biết lập trình có thể thoải mái soi code trực tiếp ngay tại repo này để yên tâm sử dụng.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="section-head">
+    <h2>Hướng dẫn cài đặt</h2>
+    <p>Chọn nền tảng bạn đang dùng để xem các bước cài đặt tương ứng.</p>
+  </div>
+
+  <div class="install-tabs" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" data-tab="desktop">🖥️ Máy tính / Chrome</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="android">📱 Android (Edge Canary)</button>
+  </div>
+
+  <div class="tab-panel active" id="panel-desktop">
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div><h4>Tải mã nguồn</h4><p>Tải bản <a href="https://github.com/vincentng295/CraveSagaX_VN/releases/latest" target="_blank" rel="noopener" style="color:var(--gold);">Source code (zip)</a> mới nhất về máy và giải nén.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div><h4>Mở trang quản lý tiện ích</h4><p>Truy cập đường dẫn <code>chrome://extensions/</code> trên trình duyệt Chrome (hoặc Edge, Opera, Brave).</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div><h4>Bật chế độ dành cho nhà phát triển</h4><p>Gạt công tắc <strong>Developer mode</strong> ở góc trên bên phải sang trạng thái <strong>BẬT (On)</strong>.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div><h4>Tải tiện ích đã giải nén</h4><p>Nhấn <strong>Load unpacked</strong> ở góc trên bên trái, sau đó chọn thư mục chứa mã nguồn vừa giải nén.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">05</span>
+        <div><h4>Ghim tiện ích</h4><p>Tìm tiện ích tên <strong>Crave Saga X Tiếng Việt</strong> và ghim lên thanh công cụ để dễ thao tác khi chơi.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="panel-android">
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div><h4>Tải Edge Canary</h4><p>Cài đặt <a href="https://play.google.com/store/apps/details?id=com.microsoft.emmx.canary" target="_blank" rel="noopener" style="color:var(--gold);">trình duyệt Edge Canary</a> từ Google Play — trình duyệt di động thông thường không hỗ trợ tiện ích chưa đóng gói.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div><h4>Tải file CRX</h4><p>Tải file <a href="https://github.com/vincentng295/CraveSagaX_VN/releases/latest/download/extension.crx" target="_blank" rel="noopener" style="color:var(--gold);">extension.crx</a> trực tiếp về thiết bị Android.</p></div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div>
+          <h4>Kích hoạt Developer Options</h4>
+          <p>Mở Edge Canary → <strong>Cài đặt</strong> → <strong>Về Microsoft Edge</strong>. Nhấn liên tục 5–7 lần vào logo phiên bản Edge cho đến khi xuất hiện thông báo kích hoạt.</p>
+          <img class="step-img" src="https://github.com/user-attachments/assets/ea576477-6c85-44ed-a0a2-73e68a7ca9b5" alt="Kích hoạt Developer Options trong Edge Canary">
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div>
+          <h4>Cài đặt tiện ích</h4>
+          <p>Quay lại menu Cài đặt → <strong>Developer Options</strong> → <strong>Extension install by crx</strong> → chọn file <code>extension.crx</code> đã tải → nhấn <strong>OK</strong>.</p>
+          <img class="step-img" src="https://github.com/user-attachments/assets/46d21f53-1ff5-469c-9a12-0ce15169dbf4" alt="Cài đặt tiện ích bằng file crx">
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">05</span>
+        <div>
+          <h4>Quản lý extension</h4>
+          <p>Extension sẽ xuất hiện trong danh sách quản lý của Edge Canary, sẵn sàng sử dụng khi vào game.</p>
+          <img class="step-img" src="https://github.com/user-attachments/assets/89934dd7-40b6-438d-8fe0-4b1c45513b26" alt="Quản lý extension trong Edge Canary">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="play">
+  <div class="section-head">
+    <h2>Chơi Crave Saga X bản web</h2>
+    <p>Chọn nền tảng phát hành bạn muốn chơi — tiện ích hoạt động trên cả ba.</p>
+  </div>
+  <div class="play-grid">
+    <a class="play-card" href="https://www.nutaku.net/games/crave-saga-x/play" target="_blank" rel="noopener">
+      <div class="pname">Nutaku</div>
+      <div class="purl">nutaku.net/games/crave-saga-x</div>
+      <span class="arrow">Chơi ngay →</span>
+    </a>
+    <a class="play-card" href="https://www.ero-labs.com/en/cloud_game.html?id=47&connect_type=1&connection_id=30" target="_blank" rel="noopener">
+      <div class="pname">Erolabs</div>
+      <div class="purl">ero-labs.com/cloud_game</div>
+      <span class="arrow">Chơi ngay →</span>
+    </a>
+    <a class="play-card" href="https://www.johren.net/games/cravesaga-en/play/" target="_blank" rel="noopener">
+      <div class="pname">Johren</div>
+      <div class="purl">johren.net/games/cravesaga-en</div>
+      <span class="arrow">Chơi ngay →</span>
+    </a>
+  </div>
+</section>
+
+<section id="donate">
+  <div class="donate">
+    <div class="donate-body">
+      <span class="eyebrow">Ủng hộ dự án</span>
+      <h2 style="margin:16px 0 22px;font-size:clamp(1.6rem,2.6vw,2.2rem);">Mời mình một ly café ☕</h2>
+      <p>Extension hoàn toàn miễn phí, nhưng nếu bạn yêu thích công cụ này và muốn gửi chút động viên để mình tiếp tục duy trì, cập nhật tính năng mới, có thể ủng hộ qua VietQR bên cạnh.</p>
+      <div class="donate-info">
+        <span>Ngân hàng — <b>BIDV</b></span>
+        <span>Số tài khoản — <b>0332186295</b></span>
+        <span>Chủ tài khoản — <b>NGUYEN HOANG THE VI</b></span>
+        <span>Nội dung — <b>CraveSagaX VN Donation</b></span>
+      </div>
+    </div>
+    <div class="qr-wrap">
+      <img src="https://img.vietqr.io/image/BIDV-0332186295-compact2.png?amount=0&addInfo=CraveSagaX%20VN%20Donation&accountName=NGUYEN%20HOANG%20THE%20VI" alt="Mã QR Donation">
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>Phát triển bởi <a href="https://github.com/vincentng295" target="_blank" rel="noopener">HuskyDG</a> — vì tình yêu với Vesteria.</span>
+  <span><a href="https://github.com/vincentng295/CraveSagaX_VN" target="_blank" rel="noopener">Xem mã nguồn trên GitHub →</a></span>
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-btn');
+  const panels = document.querySelectorAll('.tab-panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+      panels.forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected','true');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
