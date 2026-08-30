@@ -249,6 +249,16 @@ function escapeUnescapedQuotes(text) {
     return text.replace(/\\?"/g, (m) => (m === '"' ? '\\"' : m));
 }
 
+// Escape any real newline (\r\n, \n, \r) coming back from the translation engine
+// (dict / Gemma / Google Translate) into the literal "\n" text sequence the script
+// uses for in-dialogue line breaks — same idea as comma -> "\," escaping. Without
+// this, a translation engine that emits an actual line break splits one CSV record
+// into two physical lines and corrupts the script.
+function escapeRawNewlines(text) {
+    if (typeof text !== 'string') return text;
+    return text.replace(/\r\n/g, '\\n').replace(/\n/g, '\\n').replace(/\r/g, '\\n');
+}
+
 onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         is_translated = event.data.enabled ? 1 : 0;
@@ -1162,7 +1172,7 @@ onExtensionMessage((event) => {
         if (customTranslationDict && customTranslationDict[cleanText]) {
             const dictValue = extractTranslatedValue(customTranslationDict[cleanText]);
             if (dictValue) {
-                const customResult = escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,');
+                const customResult = escapeRawNewlines(escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,'));
                 return interleaveMarkers(customResult);
             }
         }
@@ -1170,7 +1180,7 @@ onExtensionMessage((event) => {
         if (translateEngine === 'gemma' && currentGemmaBatchResults && currentGemmaBatchResults.has(cleanText)) {
             const translated = currentGemmaBatchResults.get(cleanText);
             if (translated) {
-                const result = escapeUnescapedQuotes(translated).replace(/,/g, '\\,');
+                const result = escapeRawNewlines(escapeUnescapedQuotes(translated).replace(/,/g, '\\,'));
                 translateCache.set(cleanText, result);
                 sendToExtension({
                     type: 'SAVE_NEW_TRANSLATION',
@@ -1208,7 +1218,7 @@ onExtensionMessage((event) => {
             const data = await res.json();
             if (data && data[0]) {
                 const translated = data[0].map(seg => seg[0]).join('');
-                const result = escapeUnescapedQuotes(translated).replace(/,/g, '\\,');
+                const result = escapeRawNewlines(escapeUnescapedQuotes(translated).replace(/,/g, '\\,'));
                 
                 translateCache.set(cleanText, result); 
 
