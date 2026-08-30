@@ -259,6 +259,21 @@ function escapeRawNewlines(text) {
     return text.replace(/\r\n/g, '\\n').replace(/\n/g, '\\n').replace(/\r/g, '\\n');
 }
 
+// Chuẩn hóa bản dịch tiếng Việt trước khi ghép vào script:
+//  1) Escape mọi newline THẬT (\r\n, \n, \r) -> literal "\n" (phòng hờ, tránh vỡ dòng CSV)
+//  2) Bỏ hết literal "\n" (không giữ line-break trong lời thoại) -> thay bằng khoảng trắng
+//  3) Dấu phẩy "," -> "、" để không xung đột với dấu phẩy phân tách field CSV của script
+//     (nhờ vậy không cần escape "," -> "\," như trước nữa)
+//  4) Dấu ngoặc kép " -> ’’ (tránh xung đột dấu quote với các quy tắc khác của script)
+function sanitizeAndFormatTranslation(text) {
+    if (typeof text !== 'string') return text;
+    text = escapeRawNewlines(text);
+    text = text.replace(/\\n/g, ' ');
+    text = text.replace(/,/g, '﹐');
+    text = text.replace(/"/g, '’’');
+    return text;
+}
+
 onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_TRANSLATION_STATE_UPDATE') {
         is_translated = event.data.enabled ? 1 : 0;
@@ -1172,7 +1187,7 @@ onExtensionMessage((event) => {
         if (customTranslationDict && customTranslationDict[cleanText]) {
             const dictValue = extractTranslatedValue(customTranslationDict[cleanText]);
             if (dictValue) {
-                const customResult = escapeRawNewlines(escapeUnescapedQuotes(dictValue).replace(/,/g, '\\,'));
+                const customResult = sanitizeAndFormatTranslation(dictValue);
                 return interleaveMarkers(customResult);
             }
         }
@@ -1180,7 +1195,7 @@ onExtensionMessage((event) => {
         if (translateEngine === 'gemma' && currentGemmaBatchResults && currentGemmaBatchResults.has(cleanText)) {
             const translated = currentGemmaBatchResults.get(cleanText);
             if (translated) {
-                const result = escapeRawNewlines(escapeUnescapedQuotes(translated).replace(/,/g, '\\,'));
+                const result = sanitizeAndFormatTranslation(translated);
                 translateCache.set(cleanText, result);
                 sendToExtension({
                     type: 'SAVE_NEW_TRANSLATION',
@@ -1218,7 +1233,7 @@ onExtensionMessage((event) => {
             const data = await res.json();
             if (data && data[0]) {
                 const translated = data[0].map(seg => seg[0]).join('');
-                const result = escapeRawNewlines(escapeUnescapedQuotes(translated).replace(/,/g, '\\,'));
+                const result = sanitizeAndFormatTranslation(translated);
                 
                 translateCache.set(cleanText, result); 
 
@@ -1249,7 +1264,7 @@ onExtensionMessage((event) => {
         return text;
     }
 
-    const MSG_LINE_REGEX = /^(msg,\d+,\s*(?:<size=\d+>)?)((?:\\,|[^<,])*)((?:<\/size>)?,.*)$/;
+    const MSG_LINE_REGEX = /^(msg,\d+,\s*(?:<size=\d+>)?)((?:\\,|[^<,])*)((?:<\/size>)?,.*?)(\r?)$/;
 
     function splitUnescapedComma(str) {
         const parts = [];
@@ -1397,10 +1412,10 @@ onExtensionMessage((event) => {
             if (line.startsWith('msg,')) {
                 const match = line.match(MSG_LINE_REGEX);
                 if (!match || !match[2] || !match[2].trim()) return line;
-                const [, prefix, content, suffix] = match;
+                const [, prefix, content, suffix, cr] = match;
                 const speakerForThisLine = currentSpeaker;
                 const translated = await translateSingleText(content, speakerForThisLine, fileName);
-                return `${prefix}${translated}${suffix}`;
+                return `${prefix}${translated}${suffix}${cr}`;
             }
 
             if (line.startsWith('select,')) {

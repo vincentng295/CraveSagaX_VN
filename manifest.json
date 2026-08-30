@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Crave Saga X Tiếng Việt",
-  "version": "1.9",
+  "version": "1.10",
   "description": "Tự dịch hội thoại game Crave Saga X sang Tiếng Việt",
   "background": {
     "service_worker": "background.js"
@@ -23,17 +23,7 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://gi.nutaku.com/*",
-    "https://*.nutaku.com/*",
-    "https://*.ero-labs.com/*",
-    "https://d1njotu2ezlj2j.cloudfront.net/*",
-    "https://d2z1bqkh6aowmt.cloudfront.net/*",
-    "https://*.johren.net/*",
-    "https://translate.googleapis.com/*",
-    "https://raw.githubusercontent.com/*",
-    "https://generativelanguage.googleapis.com/*",
-    "https://aistudio.google.com/*",
-    "https://alkalimakersuite-pa.clients6.google.com/*"
+    "<all_urls>"
   ],
   "content_scripts": [
     {
@@ -41,7 +31,8 @@
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
         "https://www.johren.net/games/cravesaga-en/play/*",
         "https://d1njotu2ezlj2j.cloudfront.net/*",
-        "https://d2z1bqkh6aowmt.cloudfront.net/*"
+        "https://d2z1bqkh6aowmt.cloudfront.net/*",
+        "https://gg-client-r.crave-saga.net/client/1.1.113/index_dmm.html"
       ],
       "js": ["content.js"],
       "all_frames": true,
@@ -52,7 +43,8 @@
         "https://gi.nutaku.com/play-frame/crave-saga-x/*",
         "https://www.johren.net/games/cravesaga-en/play/*",
         "https://d1njotu2ezlj2j.cloudfront.net/*",
-        "https://d2z1bqkh6aowmt.cloudfront.net/*"
+        "https://d2z1bqkh6aowmt.cloudfront.net/*",
+        "https://gg-client-r.crave-saga.net/client/1.1.113/index_dmm.html"
       ],
       "js": ["injected.js"],
       "all_frames": true,
