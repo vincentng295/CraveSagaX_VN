@@ -81,6 +81,17 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
     }
 });
 
+// ==== Fake Crave Saga X 2.0: đọc trạng thái ban đầu + đồng bộ khi popup đổi toggle ====
+chrome.storage.local.get({ fakeCrave2Enabled: false }, (result) => {
+    sendToInjected({ type: 'GAME_FAKE2_UPDATE', enabled: result.fakeCrave2Enabled });
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.fakeCrave2Enabled) {
+        sendToInjected({ type: 'GAME_FAKE2_UPDATE', enabled: changes.fakeCrave2Enabled.newValue });
+    }
+});
+
 // Nhận kết quả từ injected.js (qua port): xóa cache, xuất/nhập zip
 injectedPort.addEventListener('message', (e) => {
     const data = e.data;
