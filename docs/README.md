@@ -78,6 +78,7 @@ Do các trình duyệt di động thông thường không hỗ trợ cài tiện
 - Nutaku: <https://www.nutaku.net/games/crave-saga-x/play>
 - Erolabs: <https://www.ero-labs.com/en/cloud_game.html?id=47&connect_type=1&connection_id=30>
 - Johren: <https://www.johren.net/games/cravesaga-en/play/>
+- FANZA GAMES (bản JP - クレイヴ・サーガX 神絆の導師): <https://play.games.dmm.co.jp/game/cravesagax>
 
 ---
 
