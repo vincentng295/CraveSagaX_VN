@@ -76,27 +76,6 @@ let customTranslationDict = {};
 let translateEngine = 'google'; // 'google' | 'gemma'
 let geminiApiKey = '';
 
-// ==== Fake Crave Saga X 2.0 (đổi vui nhạc & nền bản Global 1.0 -> bản JP 2.0) ====
-let fakeCrave2Enabled = false;
-const FAKE_CRAVE2_URL_MAP = [
-    {
-        suffix: '/14/14405b629.png',
-        target: 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/docs/static/14405b629.png'
-    },
-    {
-        suffix: '/66b547ae746547882f273ac378271f54.mp3',
-        target: 'https://raw.githubusercontent.com/vincentng295/CraveSagaX_VN/refs/heads/main/docs/static/2f281aa32c65b7f5e8f9fe86b459929e.mp3'
-    }
-];
-
-function applyFakeCrave2Rewrite(url) {
-    if (!fakeCrave2Enabled || typeof url !== 'string') return url;
-    for (const entry of FAKE_CRAVE2_URL_MAP) {
-        if (url.endsWith(entry.suffix)) return entry.target;
-    }
-    return url;
-}
-
 const _nativeToString = Function.prototype.toString;
 const __fakeNativeMap = new WeakMap();
 
@@ -1053,11 +1032,6 @@ onExtensionMessage((event) => {
     }
 });
 onExtensionMessage((event) => {
-    if (event.data && event.data.type === 'GAME_FAKE2_UPDATE') {
-        fakeCrave2Enabled = !!event.data.enabled;
-    }
-});
-onExtensionMessage((event) => {
     if (event.data && event.data.type === 'GAME_FASTCACHE_CLEAR') {
         fastCacheClear()
             .then(() => sendToExtension({ type: 'FASTCACHE_CLEAR_DONE' }))
@@ -1109,9 +1083,6 @@ onExtensionMessage((event) => {
         configurable: true,
         get() { return imgSrcDesc.get.call(this); },
         set(url) {
-            if (typeof url === 'string') {
-                url = applyFakeCrave2Rewrite(url);
-            }
             if (!fastCacheEnabled || typeof url !== 'string' ||
                 url.startsWith('blob:') || url.startsWith('data:') ||
                 !isCacheableImageUrl(url)) {
@@ -1496,12 +1467,6 @@ onExtensionMessage((event) => {
     XMLHttpRequest.prototype.open = function (method, url, ...rest) {
         const st = getState(this);
         st.method = method;
-        // Fake Crave Saga X 2.0: tráo URL tài nguyên (nhạc/nền) sang bản JP
-        // trước khi resolve/cache key, để mọi logic bên dưới (fast cache,
-        // request thật) đều thấy URL đã bị tráo.
-        if (typeof url === 'string') {
-            url = applyFakeCrave2Rewrite(url);
-        }
         // Cache key luôn dùng URL tuyệt đối (resolve theo document hiện tại)
         // để tránh cùng 1 tài nguyên bị coi là 2 key khác nhau khi game gọi
         // bằng đường dẫn tương đối ở những nơi khác nhau.
