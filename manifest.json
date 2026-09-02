@@ -20,7 +20,10 @@
   "permissions": [
     "storage",
     "unlimitedStorage",
-    "activeTab"
+    "activeTab",
+    "tabCapture",
+    "offscreen",
+    "downloads"
   ],
   "host_permissions": [
     "<all_urls>"

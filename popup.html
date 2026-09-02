@@ -333,6 +333,65 @@
       color: var(--text-muted);
       margin-top: 6px;
     }
+
+    /* Screen/Canvas recorder */
+    .rec-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .rec-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rec-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #9ca3af;
+      flex-shrink: 0;
+    }
+    .rec-dot.live {
+      background: #dc2626;
+      animation: rec-pulse 1s infinite;
+    }
+    @keyframes rec-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    .rec-status-text {
+      font-size: 12px;
+      flex: 1;
+      color: var(--text-muted);
+    }
+    .rec-timer {
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--text-main);
+    }
+    .btn-record {
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-record:hover { background: #b91c1c; }
+    .btn-record.recording { background: #4b5563; }
+    .btn-record.recording:hover { background: #374151; }
+    .btn-record:disabled { opacity: 0.6; cursor: not-allowed; }
+    .rec-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
   </style>
 </head>
 <body>
@@ -401,6 +460,19 @@
       </div>
       <button id="btn-export-doc" class="btn-chap-save" style="display: none; width: 100%; margin-top: 6px;">📄 Xuất hội thoại (.doc)</button>
       <div class="chap-empty" id="chap-empty-msg" style="display: none;">Chưa có dữ liệu chap nào được thu thập.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🎥 Quay canvas kèm âm thanh</div>
+    <div class="rec-card">
+      <div class="rec-row">
+        <span class="rec-dot" id="rec-dot"></span>
+        <span class="rec-status-text" id="rec-status-text">Chưa quay</span>
+        <span class="rec-timer" id="rec-timer">00:00</span>
+      </div>
+      <button id="btn-record-toggle" class="btn-record">⏺ Bắt đầu quay</button>
+      <div class="rec-hint" id="rec-hint">Quay hình + âm thanh thật của tab game, xuất file .webm vào Downloads.</div>
     </div>
   </div>
 

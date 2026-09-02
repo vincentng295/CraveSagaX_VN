@@ -356,6 +356,130 @@ document.getElementById('btn-get-api-key').addEventListener('click', () => {
   chrome.tabs.create({ url: 'https://aistudio.google.com/app/api-keys?auto_close=1' });
 });
 
+// ==== Quay canvas kèm âm thanh (tabCapture + offscreen document) ====
+// Ghi hình chạy trong offscreen document do background.js quản lý, nên vẫn
+// tiếp tục dù đóng popup. getMediaStreamId() phải gọi từ đây (popup) vì cần
+// gắn với activeTab/user-gesture của lần bấm icon extension.
+(function initRecorder() {
+    const btnRecordToggle = document.getElementById('btn-record-toggle');
+    const recDot = document.getElementById('rec-dot');
+    const recStatusText = document.getElementById('rec-status-text');
+    const recTimer = document.getElementById('rec-timer');
+    const recHint = document.getElementById('rec-hint');
+    if (!btnRecordToggle) return;
+
+    let timerInterval = null;
+
+    function formatElapsed(ms) {
+        const totalSec = Math.max(0, Math.floor(ms / 1000));
+        const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const s = String(totalSec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+    }
+
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    function startTimer(startTime) {
+        stopTimer();
+        recTimer.innerText = formatElapsed(Date.now() - startTime);
+        timerInterval = setInterval(() => {
+            recTimer.innerText = formatElapsed(Date.now() - startTime);
+        }, 1000);
+    }
+
+    function renderRecording(startTime) {
+        btnRecordToggle.innerText = '⏹ Dừng quay';
+        btnRecordToggle.classList.add('recording');
+        btnRecordToggle.disabled = false;
+        recDot.classList.add('live');
+        recStatusText.innerText = 'Đang quay...';
+        if (recHint) recHint.innerText = 'Đang ghi hình + âm thanh của tab. Bấm "Dừng quay" để lưu file .webm.';
+        startTimer(startTime);
+    }
+
+    function renderIdle() {
+        btnRecordToggle.innerText = '⏺ Bắt đầu quay';
+        btnRecordToggle.classList.remove('recording');
+        btnRecordToggle.disabled = false;
+        recDot.classList.remove('live');
+        recStatusText.innerText = 'Chưa quay';
+        recTimer.innerText = '00:00';
+        if (recHint) recHint.innerText = 'Quay hình + âm thanh thật của tab game, xuất file .webm vào Downloads.';
+        stopTimer();
+    }
+
+    // Đồng bộ trạng thái khi mở lại popup (bản ghi chạy trong offscreen
+    // document, không phụ thuộc vòng đời của popup).
+    chrome.runtime.sendMessage({ type: 'RECORD_STATUS' }, (response) => {
+        if (chrome.runtime.lastError || !response) {
+            renderIdle();
+            return;
+        }
+        if (response.recording) {
+            renderRecording(response.startTime);
+        } else {
+            renderIdle();
+        }
+    });
+
+    btnRecordToggle.addEventListener('click', () => {
+        btnRecordToggle.disabled = true;
+        const isCurrentlyRecording = btnRecordToggle.classList.contains('recording');
+
+        if (isCurrentlyRecording) {
+            chrome.runtime.sendMessage({ type: 'RECORD_STOP' }, (response) => {
+                // Luôn đưa UI về trạng thái "Chưa quay" khi người dùng bấm dừng,
+                // kể cả khi có lỗi/trạng thái lệch phía offscreen — trước đây
+                // gặp lỗi thì giữ nguyên UI "Đang quay" mãi mãi dù thực tế đã
+                // không còn quay (không có file, chấm đỏ/đồng hồ vẫn chạy).
+                renderIdle();
+
+                if (chrome.runtime.lastError || !response || !response.ok) {
+                    if (recHint) recHint.innerText = (response && response.error) || 'Có lỗi xảy ra khi dừng quay. Nếu có quay được gì, file đã được lưu tự động; nếu không, hãy thử quay lại.';
+                    return;
+                }
+                if (recHint) {
+                    recHint.innerText = response.alreadyStopped
+                        ? 'Việc quay đã dừng từ trước (có thể do sự cố), không có file để lưu.'
+                        : 'Đã lưu file .webm vào thư mục Downloads.';
+                }
+            });
+            return;
+        }
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const tab = tabs[0];
+            if (!tab || !tab.id) {
+                btnRecordToggle.disabled = false;
+                if (recHint) recHint.innerText = 'Không xác định được tab đang mở.';
+                return;
+            }
+
+            chrome.tabCapture.getMediaStreamId({ targetTabId: tab.id }, (streamId) => {
+                if (chrome.runtime.lastError || !streamId) {
+                    btnRecordToggle.disabled = false;
+                    if (recHint) recHint.innerText = 'Không lấy được quyền quay tab (thử mở lại popup rồi bấm lại).';
+                    return;
+                }
+
+                chrome.runtime.sendMessage({ type: 'RECORD_START', streamId }, (response) => {
+                    if (chrome.runtime.lastError || !response || !response.ok) {
+                        btnRecordToggle.disabled = false;
+                        if (recHint) recHint.innerText = (response && response.error) || 'Có lỗi xảy ra, thử lại.';
+                        return;
+                    }
+                    renderRecording(response.startTime);
+                });
+            });
+        });
+    });
+})();
+
 // ==== Export hội thoại của chap đang chơi ra .doc (EN + VI nếu đã dịch) ====
 // Dựa vào storyFileCache (toàn văn .txt gốc/đã dịch, cache đúng thứ tự dòng khi
 // injected.js chặn XHR), KHÔNG dùng translationDict vì dict lưu theo câu rời rạc,
