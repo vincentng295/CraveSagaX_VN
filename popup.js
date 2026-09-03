@@ -79,6 +79,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ==== Fake Crave Saga X 2.0: toggle bật/tắt ====
+    const fake2Toggle = document.getElementById('fake2-toggle');
+    const fake2StatusText = document.getElementById('fake2-status-text');
+
+    function updateFake2StatusText(enabled) {
+        if (fake2StatusText) fake2StatusText.innerText = enabled ? 'Fake 1.0: ON' : 'Fake 1.0: OFF';
+    }
+
+    if (fake2Toggle) {
+        chrome.storage.local.get({ fakeCrave2Enabled: false }, (result) => {
+            fake2Toggle.checked = result.fakeCrave2Enabled;
+            updateFake2StatusText(result.fakeCrave2Enabled);
+        });
+
+        fake2Toggle.addEventListener('change', () => {
+            const isEnabled = fake2Toggle.checked;
+            updateFake2StatusText(isEnabled);
+            chrome.storage.local.set({ fakeCrave2Enabled: isEnabled });
+        });
+    }
+
     function sendToActiveTab(message) {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0] && tabs[0].id) {
